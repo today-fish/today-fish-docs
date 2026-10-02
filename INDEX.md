@@ -1,0 +1,214 @@
+# 오늘의 수산 프로젝트 문서 목차
+
+이 문서는 오늘의 수산 프로젝트 전체 문서를 탐색하기 위한 통합 목차다. 상세 요구사항과 의사결정의 최종 기준은 각 원본 문서이며, 이 문서는 필요한 정보를 빠르게 찾기 위한 문서 지도다.
+
+## 이 문서의 사용 방법
+
+새로운 제품 기획, 설계 또는 개발 검토를 시작할 때 이 목차를 먼저 확인한다. 관련 문서를 찾은 후 반드시 원본 문서를 읽고 판단한다.
+
+여러 문서의 내용이 충돌하면 임의로 해석하지 말고 다음 순서로 확인한다.
+
+1. 문서 상태와 결정·가설의 구분
+2. 작성일 또는 수정일
+3. 상위 문제·제품 결정 문서
+4. 관련 사용자 리서치와 근거
+5. 최신 `Accepted` 결정
+
+현재 문서에는 작성일·수정일이 없으므로, 충돌을 발견하면 결정권자에게 확인하고 후속 결정 문서로 기록한다.
+
+## Repository 구조
+
+### Repository root
+
+* [`README.md`](./README.md) — **오늘의 수산 프로젝트 문서**: 저장소 첫 화면과 `INDEX.md` 진입 링크
+* `AGENTS.md` — **Repository Guidelines**: 로컬 AI Agent용 언어 규칙이며 Git에서는 제외한다.
+* `INDEX.md`: 전체 문서의 위치, 역할, 관계를 안내하는 통합 목차
+
+### `MVP/product/decisions/`
+
+현재 `PD-NNN` 문서가 위치한다. `PD-NNN`은 변경하지 않는 문서 식별자다.
+
+### `MVP/research/user/`
+
+현재 `UR-NNN` 문서가 위치한다. 문서를 읽을 때 관찰된 사실과 제품 가설을 구분한다.
+
+## 프로젝트 문서 흐름
+
+### 1. 사용자와 문제 이해
+
+1. [UR-001 제철 음식 소비 트렌드 리서치](./MVP/research/user/UR-001-제철-음식-소비-트렌드-리서치.md)에서 계절 경험 가설의 근거를 확인한다.
+2. [PD-001 서비스 문제 정의](./MVP/product/decisions/PD-001-서비스-문제-정의.md)에서 해결할 정보 비대칭과 Price Insight의 출발점을 확인한다.
+3. [PD-002 핵심 타깃 사용자](./MVP/product/decisions/PD-002-핵심-타깃-사용자.md)와 [PD-003 핵심 페르소나](./MVP/product/decisions/PD-003-핵심-페르소나.md)에서 누구를 위해 설계하는지 확인한다.
+
+### 2. 제품 정의와 경험
+
+1. [PD-004 서비스 포지셔닝](./MVP/product/decisions/PD-004-서비스-포지셔닝.md)에서 Primary Flow와 제품 경계를 확인한다.
+2. [PD-007 감성적 가치](./MVP/product/decisions/PD-007-감성적-가치.md)에서 기능적 가치와 계절 경험의 연결 원칙을 확인한다.
+
+### 3. MVP 기능 기준
+
+1. [PD-005 서비스 성장 전략](./MVP/product/decisions/PD-005-서비스-성장-전략.md)의 Phase 1을 현재 MVP 범위 판단의 출발점으로 사용한다.
+2. [PD-009 기준가격 정의](./MVP/product/decisions/PD-009-기준가격-정의.md)에서 차트와 분석의 기준값을 확인한다.
+3. [PD-008 Price Insight](./MVP/product/decisions/PD-008-Price-Insight.md)에서 데이터 범위, AI 역할, 근거 및 표현 정책을 확인한다.
+
+### 4. 성장과 운영
+
+1. [PD-005 서비스 성장 전략](./MVP/product/decisions/PD-005-서비스-성장-전략.md)에서 Phase 2·3 확장 순서를 확인한다.
+2. [PD-006 비즈니스 모델](./MVP/product/decisions/PD-006-비즈니스-모델.md)에서 비영리 MVP, 비용 원칙, 수익화 검토 조건을 확인한다.
+
+기술 설계, API, 데이터 모델, NFR, 보안·운영 정책 문서는 아직 존재하지 않는다. 제품 결정을 구현 기준으로 변환할 때 이 공백을 별도 Tech Spec 또는 ADR로 보완해야 한다.
+
+## 제품 결정 문서
+
+### [`MVP/product/decisions/PD-001-서비스-문제-정의.md`](./MVP/product/decisions/PD-001-서비스-문제-정의.md)
+
+**문서 제목:** PD-001 서비스 문제 정의
+
+**상태:** 미표기
+
+**역할:** 수산물 가격 정보 비대칭을 정의하고, 가격 인텔리전스 서비스와 Price Insight를 핵심 해결 방향으로 결정한다.
+
+**주요 섹션:** 개요, 문제 인식, 어떤 서비스를 지향할 것인가, Decision, Rationale, 결론, 제약사항, Follow-up Decisions
+
+**관련 문서:** PD-002가 사용자를 구체화하고, PD-004가 포지셔닝과 흐름을, PD-008과 PD-009가 핵심 기능과 가격 기준을 구체화한다.
+
+### [`MVP/product/decisions/PD-002-핵심-타깃-사용자.md`](./MVP/product/decisions/PD-002-핵심-타깃-사용자.md)
+
+**문서 제목:** PD-002 핵심 타겟 사용자
+
+**상태:** Accepted
+
+**역할:** 시장 흐름에 관심 있는 일반 소비자를 Primary Target으로 정하고 사용자 확장 순서를 정의한다.
+
+**주요 섹션:** Status, 개요, 유저 후보, 최종 결정, Target User Mix, 결정 이유, Consequences, Follow-up
+
+**중요 H3:** Candidate A·B·C, Primary Target, Secondary Target, Long-term Target
+
+**관련 문서:** PD-003의 페르소나와 PD-005의 단계별 사용자 확장 기준이 된다.
+
+### [`MVP/product/decisions/PD-003-핵심-페르소나.md`](./MVP/product/decisions/PD-003-핵심-페르소나.md)
+
+**문서 제목:** PD-003 Primary Persona
+
+**상태:** Accepted
+
+**역할:** 제철·트렌드, 시장·가격, 가족·합리적 소비 동기를 대표하는 세 페르소나와 제품 설계 질문을 정의한다.
+
+**주요 섹션:** 핵심 요약, 페르소나 구성, Persona 1 이서연, Persona 2 김민수, Persona 3 박성호, 세 페르소나 비교, 공통 사용자 특성, Emotional Value, 제품 설계 기준, 결정, Follow-up
+
+**중요 H3:** 이서연, 27세 직장인; 김민수, 35세 직장인; 박성호, 48세 직장인; 각 페르소나의 핵심 동기와 주요 Pain Point
+
+**관련 문서:** PD-002의 타깃을 구체화하며, UR-001과 PD-007의 계절 경험 근거·원칙을 제품 설계 관점으로 연결한다.
+
+### [`MVP/product/decisions/PD-004-서비스-포지셔닝.md`](./MVP/product/decisions/PD-004-서비스-포지셔닝.md)
+
+**문서 제목:** PD-004 서비스 포지셔닝
+
+**상태:** Accepted
+
+**역할:** 오늘의 수산을 수산물 시장 정보 탐색 서비스로 정의하고 Primary Flow, Secondary Flow, MVP에서 지양할 범위를 정한다.
+
+**주요 섹션:** 핵심 요약, 개요, 검토한 포지셔닝, 결정, 사용자 진입 동기, 핵심 사용자 탐색 흐름, Primary Flow, Secondary Flow, 기능적 포지셔닝, 감성적 포지셔닝, 핵심 메시지, 초기 MVP에서 지양하는 방향, 결정 근거, Consequences, Follow-up
+
+**관련 문서:** PD-001의 문제를 사용자 흐름으로 전환하고, PD-007의 감성 가치와 PD-008의 Price Insight 역할을 배치한다.
+
+### [`MVP/product/decisions/PD-005-서비스-성장-전략.md`](./MVP/product/decisions/PD-005-서비스-성장-전략.md)
+
+**문서 제목:** PD-005 서비스 성장 전략
+
+**상태:** Accepted
+
+**역할:** 시장 이해, 개인화된 탐색, 참여형 커뮤니티의 3단계 성장 순서와 단계별 사용자·기능 원칙을 정한다.
+
+**주요 섹션:** 성장 전략 개요, Phase 1 — 시장 이해, Phase 1 성공 기준, Phase 2 — 개인화된 시장 탐색, Phase 2 주요 기능, 가격 판단 원칙, Phase 2 개인화 기능, Phase 3 — 참여형 수산물 시장 커뮤니티, 사용자 유형, Role Badge, 공식 정보와 사용자 정보의 결합, 인증 정책, B2B 서비스 여부, 단계별 성장 구조, 성장 원칙, 장기 비전, Follow-up
+
+**관련 문서:** PD-004의 제품 경계를 시간 순서로 확장하며, PD-006의 수익화 단계와 PD-007의 재방문 경험에 연결된다.
+
+### [`MVP/product/decisions/PD-006-비즈니스-모델.md`](./MVP/product/decisions/PD-006-비즈니스-모델.md)
+
+**문서 제목:** PD-006 비즈니스 모델
+
+**상태:** Accepted
+
+**역할:** 비영리 MVP, MAU 3,000 수익화 검토 Trigger, 광고·Premium 원칙, 비용 Guardrail을 정의한다.
+
+**주요 섹션:** BM 목적, 비즈니스 모델 기본 원칙, MVP 수익화 정책, 수익화 Trigger, 1차 수익화 — Google Ads, 2차 수익화 — 개인화 Premium, 관심 수산물 Premium, Premium 가격 가설, 예상 Premium 매출 시나리오, 비용 최소화 전략, 주요 운영 비용, 주요 비용 리스크, Cost Guardrail, 수익성 판단, BM 단계, 현재 BM Decision, 추가 보완 필요 영역, 최종 결론
+
+**관련 문서:** PD-005의 성장 단계에 운영·수익 조건을 추가하며, Price Insight와 핵심 정보의 무료 제공 원칙을 정한다.
+
+### [`MVP/product/decisions/PD-007-감성적-가치.md`](./MVP/product/decisions/PD-007-감성적-가치.md)
+
+**문서 제목:** PD-007 감성적 가치
+
+**상태:** Accepted
+
+**역할:** 계절을 잘 살아가고 있다는 만족감을 제품 가설로 정의하고 제철 경험의 순환과 UX 원칙을 설명한다.
+
+**주요 섹션:** 감성적 가치의 정의, 개발자가 정의하는 감성적 가치, 핵심 제품 문장, 핵심 감성 가치 — 계절을 잘 살아가고 있다는 만족감, 제철의 의미, 제철 경험의 순환, 트렌드에서 기억으로, 변화하는 수산물 문화, 기능적 가치와 감성적 가치, 제품 경험 원칙, 제품 경험의 핵심 구조, Primary Flow와의 관계, Secondary Discovery, UI/UX 적용 원칙, 검증이 필요한 가설, Decision, 최종 제품 메시지, Follow-up
+
+**관련 문서:** UR-001을 근거로 삼고, PD-003의 사용자 동기와 PD-004의 Secondary Flow를 감성 경험으로 구체화한다.
+
+### [`MVP/product/decisions/PD-008-Price-Insight.md`](./MVP/product/decisions/PD-008-Price-Insight.md)
+
+**문서 제목:** PD-008 Price Insight
+
+**상태:** Accepted
+
+**역할:** 핵심 기능의 정의, 데이터 범위, AI 역할 분리, Chart First 원칙, 근거·상태·표현 정책을 정한다.
+
+**주요 섹션:** Price Insight의 목적, Price Insight 정의, 핵심 원칙, Price Insight의 데이터 범위, 수산물별 주요 요인은 다를 수 있다, 데이터 수집 구조, Collector AI, Insight AI, AI 역할 분리 원칙, Chart First, 가격 차트, Historical Insight, Insight Status, 최근 시장 이슈, 출처 공개 원칙, Price Insight와 실시간 채팅, 화면 경험, Price Insight 표현 원칙, 근거 부족 정책, Price Insight의 성공 기준, 현재 Decision, 후속 기술 결정, 최종 결론
+
+**중요 H3:** 사실과 해석, 분석 완료, 일부 요인 확인, 파악 중, 잘못된 표현, 권장 표현
+
+**관련 문서:** PD-001의 해결책을 기능 정책으로 구체화하고, PD-009의 기준가격을 분석 기준점으로 사용한다.
+
+### [`MVP/product/decisions/PD-009-기준가격-정의.md`](./MVP/product/decisions/PD-009-기준가격-정의.md)
+
+**문서 제목:** PD-009 기준가격 정의
+
+**상태:** Accepted
+
+**역할:** 주요 도매시장 평균을 대표 기준가격으로 정하고 분포, 추정 소비자가, 최신성, 누락·이상치 처리 원칙을 정의한다.
+
+**주요 섹션:** 기준가격이 필요한 이유, 대표 기준가격, 도매가를 선택한 이유, 여러 시장의 가격 처리, 가격 분포 함께 제공, 시장별 상세 가격, 소매가격의 역할, 예상 소비자가, 실측가격과 추정가격 구분, 초기 가격 구분 기준, 추가 구분 후보, 데이터 최신성, 데이터 Freshness, 데이터 없는 날의 처리, 가격 데이터 품질 검증, 이상치 처리, Price Quality Status, Price Insight와의 관계, 가격 표시 원칙, 초기 MVP 범위, 현재 Decision, 후속 결정, 최종 결론
+
+**관련 문서:** PD-008의 가격 차트와 Price Insight가 사용하는 수치 기준을 제공하며, 후속 Data Quality·정규화 기술 문서의 상위 결정이다.
+
+## 사용자 리서치 문서
+
+### [`MVP/research/user/UR-001-제철-음식-소비-트렌드-리서치.md`](./MVP/research/user/UR-001-제철-음식-소비-트렌드-리서치.md)
+
+**문서 제목:** UR-001 제철 음식 소비 트렌드 리서치
+
+**상태:** 문서 상태 미표기; 기후변화와 계절감 가설은 `Needs Validation`
+
+**역할:** 제철 음식의 검색 관심, 소비 동기, 연령대별 관심과 수산물 계절성을 조사하고 제품 가설과 적용 방향을 도출한다.
+
+**주요 섹션:** 리서치 목적, Research Questions, 검색 관심 증가, 제철코어 트렌드, 소비 동기, 연령대별 관심, 수산물에서 나타나는 계절성, 산업 반응, 관찰된 사실, 제품 해석, 제품 가설, 기후변화와 계절감 가설, 제품 적용 방향, 결론, Follow-up
+
+**중요 H3:** 20대·30대·40~50대, 겨울 방어, 가을 전어·새우, Hypothesis 1·2·3, 가설 상태
+
+**관련 문서:** PD-003의 페르소나, PD-004의 감성적 포지셔닝, PD-007의 계절 경험 가설에 근거를 제공한다.
+
+## 핵심 문서 관계
+
+| 출발 문서 | 연결 문서 | 관계 |
+| --- | --- | --- |
+| UR-001 | PD-003, PD-004, PD-007 | 제철·계절 경험에 대한 사용자 및 시장 근거 |
+| PD-001 | PD-002, PD-004, PD-008 | 문제 정의 → 사용자·포지셔닝·핵심 기능 |
+| PD-002 | PD-003, PD-005 | 타깃 정의 → 페르소나·단계별 사용자 확장 |
+| PD-004 | PD-007, PD-008 | 서비스 포지셔닝 → 감성 가치·Price Insight |
+| PD-005 | PD-006 | 성장 단계 → 운영 및 수익화 조건 |
+| PD-009 | PD-008 | 기준가격 → 차트와 Price Insight 분석 기준 |
+
+## 목차 유지 규칙
+
+다음 상황에서는 이 목차도 함께 업데이트한다.
+
+* 새로운 Markdown 문서 추가 또는 기존 문서 삭제
+* 문서 파일명 변경 또는 이동
+* H1이나 주요 섹션 구조 변경
+* 문서 역할 또는 상태 변경
+* 문서 간 상위·근거·후속 관계 변경
+
+목차는 원본 문서 내용을 복제하지 않는다. 항상 “어떤 정보가 어디에 있는가”를 빠르게 찾을 수 있는 수준으로 유지한다. 파일명은 `PREFIX-NNN-한국어-문서명.md` 형식을 사용하되 `Price Insight`, `MVP`, `API` 같은 프로젝트 고유 영어 명사는 유지한다.
