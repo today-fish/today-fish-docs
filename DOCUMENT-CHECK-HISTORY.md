@@ -145,3 +145,68 @@ Baseline: `44fff1ee81fa2437d259f5bd474cf71ee8152106` → `d3e4da390fbba27383fdc1
 ### 다음 검사 기준
 
 `d3e4da390fbba27383fdc14a366217b8e991a231`
+
+## 2026-10-07 04:14 KST
+
+### 검사 범위
+
+Baseline: `d3e4da390fbba27383fdc14a366217b8e991a231` → `0f7f3b69167a627328d5f7deeac7069bd9737334`
+
+Baseline 이후 관리 파일 변경과 working tree에 추가된 `MVP/poc/` 문서 2개를 증분 검사했다. PoC 결과와 직접 관련된 PD-009, PD-010, PD-012만 정합성 비교 대상으로 확인했다.
+
+### 변경 감지
+
+* 추가: 2개
+* 수정: 4개
+* 삭제: 1개
+* 이동/파일명 변경: 0개
+
+### 검사 대상
+
+* D `.codex/skills/docs-consistency-check/SKILL.md` — Git 추적에서 제외되고 로컬 파일로 유지
+* M `.gitignore`
+* M `DOCUMENT-CHECK-HISTORY.md`
+* A `MVP/poc/POC-001-aT-공영도매시장-API-데이터.md`
+* A `MVP/poc/POC-002-외부-가격-데이터-검증-체크리스트.md`
+* M `INDEX.md`
+* M `README.md`
+
+### 검사 결과
+
+* 파일명: 자동 수정
+* 디렉토리 구조: 정상
+* 문서 구조: 자동 수정
+* 프로젝트 용어: 정상
+* 링크: 자동 수정
+* 문서 정합성: 정상
+* INDEX.md: 수정
+* README.md: 수정
+
+### 수행한 수정
+
+* `POC-001-at-wholesale-seafood-data.md`를 `POC-001-aT-공영도매시장-API-데이터.md`로 변경
+* `POC-CHECKLIST.md`를 `POC-002-외부-가격-데이터-검증-체크리스트.md`로 변경
+* 두 PoC 문서의 H1에 문서 ID를 반영
+* POC-001과 POC-002에 PD-009, PD-010, PD-012 및 상호 참조 링크 추가
+* INDEX에 `MVP/poc/` 구조, 문서 역할, 주요 heading과 관계 추가
+* README에 `MVP/poc/` 파일 목차와 탐색 순서 추가
+
+### 사용자 검토
+
+* 없음
+
+### 사용량
+
+* 이번 검사 token 사용량: 확인 불가
+* 잔여 token: 확인 불가
+* Codex usage/quota: 확인 불가
+
+### 검사 상태
+
+`완료`
+
+### 다음 검사 기준
+
+`0f7f3b69167a627328d5f7deeac7069bd9737334`
+
+현재 검사 수정사항을 커밋한 뒤 다음 검사에서는 해당 커밋을 새로운 baseline으로 갱신한다.
