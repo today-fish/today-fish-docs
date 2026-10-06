@@ -21,6 +21,7 @@
 ### Repository root
 
 * [`README.md`](./README.md) — **오늘의 수산 프로젝트 문서**: 저장소 첫 화면과 `INDEX.md` 진입 링크
+* [`DOCUMENT-CHECK-HISTORY.md`](./DOCUMENT-CHECK-HISTORY.md) — **문서 일관성 검사 이력**: 검사 결과와 다음 baseline 기록
 * `AGENTS.md` — **Repository Guidelines**: 로컬 AI Agent용 언어 규칙이며 Git에서는 제외한다.
 * `INDEX.md`: 전체 문서의 위치, 역할, 관계를 안내하는 통합 목차
 
@@ -47,16 +48,18 @@
 
 ### 3. MVP 기능 기준
 
-1. [PD-005 서비스 성장 전략](./MVP/product/decisions/PD-005-서비스-성장-전략.md)의 Phase 1을 현재 MVP 범위 판단의 출발점으로 사용한다.
+1. [PD-012 MVP 범위](./MVP/product/decisions/PD-012-MVP-범위.md)에서 현재 구현 범위와 우선순위를 확인한다.
 2. [PD-009 기준가격 정의](./MVP/product/decisions/PD-009-기준가격-정의.md)에서 차트와 분석의 기준값을 확인한다.
-3. [PD-008 Price Insight](./MVP/product/decisions/PD-008-Price-Insight.md)에서 데이터 범위, AI 역할, 근거 및 표현 정책을 확인한다.
+3. [PD-008 Price Insight](./MVP/product/decisions/PD-008-Price-Insight.md)에서 핵심 기능의 데이터 범위와 표현 정책을 확인한다.
+4. [PD-010 데이터 신뢰 정책](./MVP/product/decisions/PD-010-데이터-신뢰-정책.md)에서 출처와 Evidence 사용 원칙을 확인한다.
+5. [PD-011 AI 역할 정의](./MVP/product/decisions/PD-011-AI-역할-정의.md)에서 MVP AI 범위와 후속 신뢰성 로드맵을 확인한다.
 
 ### 4. 성장과 운영
 
 1. [PD-005 서비스 성장 전략](./MVP/product/decisions/PD-005-서비스-성장-전략.md)에서 Phase 2·3 확장 순서를 확인한다.
 2. [PD-006 비즈니스 모델](./MVP/product/decisions/PD-006-비즈니스-모델.md)에서 비영리 MVP, 비용 원칙, 수익화 검토 조건을 확인한다.
 
-기술 설계, API, 데이터 모델, NFR, 보안·운영 정책 문서는 아직 존재하지 않는다. 제품 결정을 구현 기준으로 변환할 때 이 공백을 별도 Tech Spec 또는 ADR로 보완해야 한다.
+제품 수준의 기술 원칙은 정의되어 있지만 API, 데이터 모델, NFR, 보안·운영 정책을 구현 가능한 수준으로 구체화한 Tech Spec 또는 ADR은 아직 존재하지 않는다.
 
 ## 제품 결정 문서
 
@@ -74,7 +77,7 @@
 
 ### [`MVP/product/decisions/PD-002-핵심-타깃-사용자.md`](./MVP/product/decisions/PD-002-핵심-타깃-사용자.md)
 
-**문서 제목:** PD-002 핵심 타겟 사용자
+**문서 제목:** PD-002 핵심 타깃 사용자
 
 **상태:** Accepted
 
@@ -118,11 +121,13 @@
 
 **상태:** Accepted
 
-**역할:** 시장 이해, 개인화된 탐색, 참여형 커뮤니티의 3단계 성장 순서와 단계별 사용자·기능 원칙을 정한다.
+**역할:** 시장 이해, 개인화된 탐색, 참여형 커뮤니티의 3단계 성장 순서와 단계별 사용자·기능 원칙을 정하고, MVP 기본 채팅과 Phase 3 커뮤니티를 구분한다.
 
 **주요 섹션:** 성장 전략 개요, Phase 1 — 시장 이해, Phase 1 성공 기준, Phase 2 — 개인화된 시장 탐색, Phase 2 주요 기능, 가격 판단 원칙, Phase 2 개인화 기능, Phase 3 — 참여형 수산물 시장 커뮤니티, 사용자 유형, Role Badge, 공식 정보와 사용자 정보의 결합, 인증 정책, B2B 서비스 여부, 단계별 성장 구조, 성장 원칙, 장기 비전, Follow-up
 
-**관련 문서:** PD-004의 제품 경계를 시간 순서로 확장하며, PD-006의 수익화 단계와 PD-007의 재방문 경험에 연결된다.
+**중요 H3:** 가격 정보, Price Insight, 근거 확인, 계절 정보, 품목별 실시간 채팅
+
+**관련 문서:** PD-004의 제품 경계를 시간 순서로 확장하며, PD-006의 수익화 단계, PD-007의 재방문 경험, PD-012의 확정 MVP 범위에 연결된다.
 
 ### [`MVP/product/decisions/PD-006-비즈니스-모델.md`](./MVP/product/decisions/PD-006-비즈니스-모델.md)
 
@@ -154,11 +159,11 @@
 
 **상태:** Accepted
 
-**역할:** 핵심 기능의 정의, 데이터 범위, AI 역할 분리, Chart First 원칙, 근거·상태·표현 정책을 정한다.
+**역할:** 핵심 기능의 정의, 데이터 범위, Chart First 원칙, 일 1회 생성 정책, 근거·표현 정책을 정한다.
 
-**주요 섹션:** Price Insight의 목적, Price Insight 정의, 핵심 원칙, Price Insight의 데이터 범위, 수산물별 주요 요인은 다를 수 있다, 데이터 수집 구조, Collector AI, Insight AI, AI 역할 분리 원칙, Chart First, 가격 차트, Historical Insight, Insight Status, 최근 시장 이슈, 출처 공개 원칙, Price Insight와 실시간 채팅, 화면 경험, Price Insight 표현 원칙, 근거 부족 정책, Price Insight의 성공 기준, 현재 Decision, 후속 기술 결정, 최종 결론
+**주요 섹션:** Price Insight의 목적, Price Insight 정의, 핵심 원칙, 고려하는 데이터 범위, 품목마다 중요 요인은 다르다, 정형 데이터 수집, 비정형 데이터 수집, MVP Collector AI, MVP Price Insight 생성 주기, 변경이 없는 경우, 가격 차트, 시점별 Price Insight, 주요 시장 요인은 최대 3개, Historical Insight Snapshot, 최근 시장 이슈, 출처 공개, 분석 상태, 파악 중, 실시간 채팅 연계, 표현 원칙, 직접적인 설명이 존재하는 경우, MVP AI 범위, 성공 기준, 현재 Decision, 후속 기술 결정, 최종 결론
 
-**중요 H3:** 사실과 해석, 분석 완료, 일부 요인 확인, 파악 중, 잘못된 표현, 권장 표현
+**중요 H3:** 사실, 시장 배경 설명
 
 **관련 문서:** PD-001의 해결책을 기능 정책으로 구체화하고, PD-009의 기준가격을 분석 기준점으로 사용한다.
 
@@ -173,6 +178,42 @@
 **주요 섹션:** 기준가격이 필요한 이유, 대표 기준가격, 도매가를 선택한 이유, 여러 시장의 가격 처리, 가격 분포 함께 제공, 시장별 상세 가격, 소매가격의 역할, 예상 소비자가, 실측가격과 추정가격 구분, 초기 가격 구분 기준, 추가 구분 후보, 데이터 최신성, 데이터 Freshness, 데이터 없는 날의 처리, 가격 데이터 품질 검증, 이상치 처리, Price Quality Status, Price Insight와의 관계, 가격 표시 원칙, 초기 MVP 범위, 현재 Decision, 후속 결정, 최종 결론
 
 **관련 문서:** PD-008의 가격 차트와 Price Insight가 사용하는 수치 기준을 제공하며, 후속 Data Quality·정규화 기술 문서의 상위 결정이다.
+
+### [`MVP/product/decisions/PD-010-데이터-신뢰-정책.md`](./MVP/product/decisions/PD-010-데이터-신뢰-정책.md)
+
+**문서 제목:** PD-010 데이터 신뢰 정책
+
+**상태:** Accepted
+
+**역할:** 출처를 Official, Market, Verified Media, Community로 구분하고 Signal·Evidence·원 출처·근거 부족 처리 원칙을 정의한다.
+
+**주요 섹션:** 데이터 신뢰 정책의 목적, 핵심 원칙, 데이터 출처 분류, Level A — Official, Level B — Market, Level C — Verified Media, Level D — Community, 출처 Level의 의미, Signal과 Evidence, 뉴스 사용 원칙, 원 출처 우선, 출처 충돌, 정형 데이터 검증, 데이터 정규화, 데이터 최신성, 추정값과 관측값 분리, AI 생성 정보의 위치, Source Traceability, MVP AI 신뢰성 관리, MVP에서 구현하지 않는 신뢰성 기능, Harness Engineering, 근거 부족, Community Insight, 정책이 지향하는 사용자 경험, 현재 Decision, 최종 결론
+
+**관련 문서:** PD-008의 근거·표현 정책과 PD-011의 AI 검증 범위를 구체화한다.
+
+### [`MVP/product/decisions/PD-011-AI-역할-정의.md`](./MVP/product/decisions/PD-011-AI-역할-정의.md)
+
+**문서 제목:** PD-011 AI 역할 정의
+
+**상태:** Accepted
+
+**역할:** MVP에서 Collector AI만 사용하고 정형 데이터는 API·Batch로 처리하는 원칙과 이후 신뢰성 고도화 단계를 정의한다.
+
+**주요 섹션:** AI를 사용하는 이유, AI의 기본 역할, AI는 데이터의 원 출처가 아니다, 정형 데이터 수집, 비정형 데이터, MVP Collector AI, Collector AI 역할, Collector AI 출력 예시, Collector AI의 제한, MVP Price Insight 생성, MVP에서 복수 AI Agent를 사용하지 않는다, MVP 신뢰성 관리, Human-in-the-loop, AI가 하면 안 되는 일, AI 비용 원칙, 향후 신뢰성 개선, Evidence 구조화, Atomic Claim, Verifier AI, Model Routing, Harness Engineering, Evidence Binding, 자동 Fallback, AI Evaluation, AI 고도화 로드맵, MVP에서 하지 않는 것, 현재 Decision, 후속 기술 결정, 최종 결론
+
+**관련 문서:** PD-008의 Price Insight 생성 방식과 PD-010의 데이터 신뢰 정책을 구현 관점에서 제한한다.
+
+### [`MVP/product/decisions/PD-012-MVP-범위.md`](./MVP/product/decisions/PD-012-MVP-범위.md)
+
+**문서 제목:** PD-012 MVP Scope
+
+**상태:** Accepted
+
+**역할:** MVP의 핵심 흐름, 필수·선택·제외 기능, 초기 품목 선정 기준, 기술·비용 원칙과 개발 시작 조건을 확정한다.
+
+**주요 섹션:** MVP 목적, MVP 개발 원칙, MVP 핵심 사용자 흐름, MVP 필수 기능, 수산물 상세 페이지, 대표 기준가격, 가격 차트, Chart First, Price Insight, Price Insight 갱신, Collector AI, 정형 데이터 수집, 출처 공개, 근거 부족 처리, 시점별 시장 요인, 시장 이슈 영역, 회원 기능, 실시간 채팅, 채팅 기본 경험, 채팅 MVP 범위, 채팅 성능 목표, 관심 수산물, 초기 지원 품목, MVP에서 제외하는 기능, MVP 기능 우선순위, MVP 기술 원칙, MVP 비용 원칙, MVP 성공 판단, MVP가 검증해야 하는 핵심 가설, MVP 개발 시작 조건, MVP 이후, 현재 Decision, 최종 결론
+
+**관련 문서:** PD-005의 Phase 1, PD-006의 비영리 정책, PD-008~011의 기능·가격·데이터·AI 결정을 하나의 구현 범위로 통합한다.
 
 ## 사용자 리서치 문서
 
@@ -198,8 +239,10 @@
 | PD-001 | PD-002, PD-004, PD-008 | 문제 정의 → 사용자·포지셔닝·핵심 기능 |
 | PD-002 | PD-003, PD-005 | 타깃 정의 → 페르소나·단계별 사용자 확장 |
 | PD-004 | PD-007, PD-008 | 서비스 포지셔닝 → 감성 가치·Price Insight |
-| PD-005 | PD-006 | 성장 단계 → 운영 및 수익화 조건 |
+| PD-005 | PD-006, PD-012 | 성장 단계 → 운영·수익화 조건과 확정 MVP 범위 |
 | PD-009 | PD-008 | 기준가격 → 차트와 Price Insight 분석 기준 |
+| PD-008 | PD-010, PD-011 | Price Insight → 데이터 신뢰 정책과 AI 역할 |
+| PD-008~PD-011 | PD-012 | 기능·가격·신뢰·AI 결정 → 통합 MVP 범위 |
 
 ## 목차 유지 규칙
 

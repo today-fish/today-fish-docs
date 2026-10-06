@@ -10,6 +10,8 @@
 
 1. [INDEX.md — 통합 문서 목차](./INDEX.md)
    - 전체 문서의 역할, 주요 섹션, 읽기 순서와 문서 관계를 안내한다.
+2. [DOCUMENT-CHECK-HISTORY.md — 문서 일관성 검사 이력](./DOCUMENT-CHECK-HISTORY.md)
+   - 문서 검사 범위, 수정 결과와 다음 검사 기준을 기록한다.
 
 ### `MVP/product/decisions/`
 
@@ -22,6 +24,9 @@
 7. [PD-007-감성적-가치.md](./MVP/product/decisions/PD-007-감성적-가치.md)
 8. [PD-008-Price-Insight.md](./MVP/product/decisions/PD-008-Price-Insight.md)
 9. [PD-009-기준가격-정의.md](./MVP/product/decisions/PD-009-기준가격-정의.md)
+10. [PD-010-데이터-신뢰-정책.md](./MVP/product/decisions/PD-010-데이터-신뢰-정책.md)
+11. [PD-011-AI-역할-정의.md](./MVP/product/decisions/PD-011-AI-역할-정의.md)
+12. [PD-012-MVP-범위.md](./MVP/product/decisions/PD-012-MVP-범위.md)
 
 ### `MVP/research/user/`
 
@@ -32,6 +37,6 @@
 1. 사용자 리서치와 서비스 문제를 이해한다.
 2. 타깃 사용자와 페르소나를 확인한다.
 3. 서비스 포지셔닝과 감성적 가치를 확인한다.
-4. 성장 전략에서 현재 MVP 범위를 확인한다.
-5. 기준가격과 Price Insight를 구현 기준으로 사용한다.
+4. 성장 전략과 MVP 범위에서 현재 구현 대상을 확인한다.
+5. 기준가격, Price Insight, 데이터 신뢰 및 AI 역할 문서를 구현 기준으로 사용한다.
 6. 비즈니스 모델에서 운영 및 수익화 원칙을 확인한다.
