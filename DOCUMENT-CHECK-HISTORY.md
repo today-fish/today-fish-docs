@@ -391,3 +391,96 @@ Baseline 이후 커밋된 직전 검사 결과와 working tree에 추가된 PRD 
 ### 다음 검사 기준
 
 `5e6f58cdd80bfe02f22b530e83e95e56c8308900`
+
+## 2026-10-14 03:25 KST
+
+### 검사 범위
+
+Baseline: `5e6f58cdd80bfe02f22b530e83e95e56c8308900` → checked HEAD: `8052825ff2f6fff7dc91b6b603b2cd7ec58ec793`
+
+Baseline 이후 커밋된 문서와 working tree의 신규 제품 정책 및 연관 문서를 증분 검사했다. PRD·PF·PP 간 요구사항, 정책, 출시 기준의 추적성과 INDEX·README 탐색 경로를 함께 확인했다.
+
+### 변경 감지
+
+* 추가: 8개
+* 수정: 6개
+* 삭제: 0개
+* 이동/파일명 변경: 0개
+
+### 검사 대상
+
+* M `DOCUMENT-CHECK-HISTORY.md`
+* M `INDEX.md`
+* M `MVP/poc/POC-003-수산물-가격-데이터-연계.md`
+* M `MVP/product/decisions/PD-012-MVP-기능-우선순위.md`
+* M `MVP/product/decisions/PD-013-가격-데이터-PoC-적용-원칙.md`
+* A `MVP/product/PRD-001-MVP-제품-요구사항.md`
+* A `MVP/product/features/PF-001-홈-화면.md`
+* A `MVP/product/features/PF-002-수산물-가격-차트.md`
+* A `MVP/product/features/PF-003-Price-Insight.md`
+* A `MVP/product/features/PF-004-최근-이슈.md`
+* A `MVP/product/features/PF-005-실시간-채팅.md`
+* A `MVP/product/policies/PP-002-AI-분석-운영-정책.md` — working tree
+* A `MVP/product/policies/PP-003-MVP-출시-인수-기준.md` — working tree
+* M `README.md`
+
+### 검사 결과
+
+* 파일명: 자동 수정 — 기존 문서의 예약 번호 체계에 맞춰 제품 정책 번호 정리
+* 디렉토리 구조: 정상
+* 문서 구조: 자동 수정 — PP 문서 H1의 문서 ID 표기 통일
+* 프로젝트 용어: 정상
+* 링크: 자동 수정 — PP-002·PP-003 실제 문서 링크 및 탐색 경로 반영
+* 요구사항 중복: 수정 — PRD는 상위 `CAP-*`, PF는 상세 `FR-*` 체계로 분리
+* 요구사항 정합성: 정상 — 회원가입·로그인 제외, 실시간 채팅 포함, 초기 품목 3종 확정 유지
+* Source of Truth: 정상 — Accepted PD와 신규 PP의 정책 의미가 일치함
+* INDEX.md: 수정
+* README.md: 수정
+
+### 수행한 수정
+
+* AI 분석 운영 정책을 `PP-002`, MVP 출시 인수 기준을 `PP-003`으로 정리해 기존 PP-001 예약 참조와 충돌 제거
+* PP-003에 PF-005 실시간 채팅의 인수 기준, 운영 확인, 지표, 출시 차단 조건, 최종 체크리스트 추가
+* PF-001~005의 실제 PP-002·PP-003 참조를 상대 링크로 연결
+* PF 문서의 정합성 검토 상태 문구를 현재 상태로 갱신
+* INDEX와 README에 제품 정책 디렉토리, 문서 역할, 관계, 권장 탐색 순서 추가
+* PRD의 기능 영역을 `CAP-HOME`, `CAP-CHART`, `CAP-INSIGHT`, `CAP-ISSUE`, `CAP-CHAT`으로 식별하고 PF별 상위 기능 연결 및 INDEX·README 안내 추가
+
+### 사용자 검토
+
+발견된 문제:
+
+* PRD와 PF가 동일한 요구사항 ID를 서로 다른 의미로 사용한다. 예를 들어 PRD의 `FR-INSIGHT-01`은 저장된 분석 조회를 뜻하지만 PF-003의 `FR-INSIGHT-01`은 요인 최대 3개 제한을 뜻한다.
+* `FR-HOME-*`, `FR-CHART-*`, `FR-ISSUE-*`에서도 같은 형태의 추적성 충돌이 확인된다.
+
+가능한 처리 방향:
+
+* 권장: PRD는 `CAP-HOME`, `CAP-CHART`, `CAP-INSIGHT`, `CAP-ISSUE`, `CAP-CHAT` 같은 상위 기능 ID를 사용하고, PF는 상세 `FR-*` ID를 유지한다.
+* PRD와 PF의 요구사항을 일대일로 재구성하고 동일한 `FR-*` ID 체계로 맞춘다.
+* `PRD-FR-*`와 `PF-FR-*`처럼 문서 계층별 네임스페이스를 분리한다.
+
+사용자 결정:
+
+* PRD는 상위 `CAP-*` ID를 사용하고 PF는 상세 `FR-*` ID를 유지하는 권장안 승인
+
+반영 결과:
+
+* PRD와 PF에서 같은 `FR-*` ID가 다른 의미로 사용되던 충돌 제거
+* PRD 기능 영역과 PF 상세 명세 사이의 일대일 추적 관계 명시
+
+### 사용량
+
+* 이번 검사 token 사용량: 확인 불가
+* 잔여 token: 확인 불가
+* Codex usage/quota: 확인 불가
+
+### 검사 상태
+
+`완료`
+
+### 다음 검사 기준
+
+* baseline_commit: `5e6f58cdd80bfe02f22b530e83e95e56c8308900` 유지 — working tree 커밋 후 갱신
+* checked_head: `8052825ff2f6fff7dc91b6b603b2cd7ec58ec793`
+* working_tree_dirty: `true`
+* pending: `DOCUMENT-CHECK-HISTORY.md`, `INDEX.md`, `README.md`, `MVP/product/PRD-001`, `MVP/product/features/PF-001~005`, `MVP/product/policies/PP-002~003`
