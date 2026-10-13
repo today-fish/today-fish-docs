@@ -29,6 +29,18 @@
 12. [PD-012-MVP-범위.md](./MVP/product/decisions/PD-012-MVP-범위.md)
 13. [PD-013-가격-데이터-PoC-적용-원칙.md](./MVP/product/decisions/PD-013-가격-데이터-PoC-적용-원칙.md)
 
+### `MVP/product/`
+
+1. [PRD-001-MVP-제품-요구사항.md](./MVP/product/PRD-001-MVP-제품-요구사항.md)
+
+### `MVP/product/features/`
+
+1. [PF-001-홈-화면.md](./MVP/product/features/PF-001-홈-화면.md)
+2. [PF-002-수산물-가격-차트.md](./MVP/product/features/PF-002-수산물-가격-차트.md)
+3. [PF-003-Price-Insight.md](./MVP/product/features/PF-003-Price-Insight.md)
+4. [PF-004-최근-이슈.md](./MVP/product/features/PF-004-최근-이슈.md)
+5. [PF-005-실시간-채팅.md](./MVP/product/features/PF-005-실시간-채팅.md)
+
 ### `MVP/research/user/`
 
 1. [UR-001-제철-음식-소비-트렌드-리서치.md](./MVP/research/user/UR-001-제철-음식-소비-트렌드-리서치.md)
@@ -46,5 +58,6 @@
 3. 서비스 포지셔닝과 감성적 가치를 확인한다.
 4. 성장 전략과 MVP 범위에서 현재 구현 대상을 확인한다.
 5. 기준가격, Price Insight, 데이터 신뢰 및 AI 역할 문서를 구현 기준으로 사용한다.
-6. PoC 문서에서 데이터 소스와 가격 차트의 실제 사용 가능성을 확인하고, PD-013에서 제품 정책에 적용하는 기준을 확인한다.
-7. 비즈니스 모델에서 운영 및 수익화 원칙을 확인한다.
+6. PRD에서 통합 MVP 범위를 확인하고 PF 문서에서 기능별 요구사항과 인수 기준을 확인한다.
+7. PoC 문서에서 데이터 소스와 가격 차트의 실제 사용 가능성을 확인하고, PD-013에서 제품 정책에 적용하는 기준을 확인한다.
+8. 비즈니스 모델에서 운영 및 수익화 원칙을 확인한다.
