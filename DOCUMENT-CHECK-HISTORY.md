@@ -484,3 +484,111 @@ Baseline 이후 커밋된 문서와 working tree의 신규 제품 정책 및 연
 * checked_head: `8052825ff2f6fff7dc91b6b603b2cd7ec58ec793`
 * working_tree_dirty: `true`
 * pending: `DOCUMENT-CHECK-HISTORY.md`, `INDEX.md`, `README.md`, `MVP/product/PRD-001`, `MVP/product/features/PF-001~005`, `MVP/product/policies/PP-002~003`
+
+## 2026-10-14 18:57 KST
+
+### 검사 범위
+
+- Baseline: `24c2d0c098f95c63cc6a7a31dbb31bf8934d0f83`
+- 검사 HEAD: `24c2d0c098f95c63cc6a7a31dbb31bf8934d0f83`
+- Working tree: dirty
+- 검사 방식: incremental
+
+이전 검사에서 검증한 변경이 HEAD에 커밋된 것을 확인하고, 이후 working tree의 PRD·PF-005 수정과 신규 UX-001을 증분 검사했다.
+
+### 변경 감지
+
+- 추가: 1개
+- 수정: 6개
+- 삭제: 0개
+- 이동/파일명 변경: 0개
+- Untracked: 1개
+
+### 검사 대상
+
+- M `MVP/product/PRD-001-MVP-제품-요구사항.md`
+- M `MVP/product/features/PF-005-실시간-채팅.md`
+- M `MVP/product/policies/PP-003-MVP-출시-인수-기준.md`
+- U `MVP/product/ux/UX-001-사용자-흐름-및-정보-구조.md`
+- M `INDEX.md`
+- M `README.md`
+- M `DOCUMENT-CHECK-HISTORY.md` — 검사 메타데이터
+
+관련 문서로 Accepted `PD-012`, `PP-003`, `INDEX.md`, `README.md` 및 HEAD의 기존 PF-005를 확인했다.
+
+### 검사 결과
+
+- 파일명: 정상
+- 디렉토리 구조: 정상
+- 문서 구조: 수정 — PF-005 전체 명세 복원·통합 및 PRD·UX H1 형식 통일
+- 프로젝트 용어: 정상
+- 내부 링크: 수정 — PRD·UX의 정책 번호와 상대 링크를 실제 PP-002·PP-003 경로로 정리
+- 요구사항 중복: 정상
+- 요구사항 정합성: 정상 — 기본 채팅 요구사항과 승인된 익명 식별·세션 정책을 PF-005에 통합
+- Source of Truth: 정상 — 사용자 승인 내용을 PRD·PF·PP·UX와 검사 이력에 연결
+- INDEX.md: 수정 — UX 디렉토리·UX-001과 갱신된 PF-005 역할·관계 등록
+- README.md: 수정 — UX 문서 영역과 기본 탐색 순서 추가
+
+### 발견된 문제
+
+- 문제 ID: `PF005-STRUCT-001`
+  - 관련 문서: PF-005, PRD-001, PP-003
+  - 문제 내용: 기존 274줄 기능 명세가 109줄의 익명 식별·세션 정책으로 대체되어 문서 H1, 상태, 상위 문서, 채팅방 격리, 메시지 송수신, 입력 제한, 데이터 계약, QA, 출시 기준과 관련 문서가 삭제됐다.
+  - 처리 상태: 해결 — 기존 전체 기능 명세 복원 후 신규 정책 통합
+- 문제 ID: `CHAT-SOT-001`
+  - 관련 문서: PRD-001, PF-005, UX-001, PD-012, PP-003
+  - 문제 내용: 닉네임 500개×색상 20개, `localStorage`, 3분 예약, 조합 고갈 시 자동 재시도가 확정 정책으로 추가됐으나 Accepted PD와 기존 검사 이력에는 승인 근거가 없고 PP-003 출시 게이트에도 반영되지 않았다.
+  - 처리 상태: 해결 — 사용자 승인 후 PP-003을 포함한 연관 문서에 반영
+- 문제 ID: `PP-REF-001`
+  - 관련 문서: PRD-001, UX-001, INDEX.md, README.md
+  - 문제 내용: PRD·UX는 `PP-001-AI-분석-운영-정책.md`, `PP-002-MVP-출시-인수-기준.md`를 참조하지만 실제 문서는 PP-002·PP-003이다. 또한 PRD는 PP-001 가격 데이터 처리 정책을 폐기했다고 서술하지만 INDEX·README는 작성 예정으로 관리한다.
+  - 처리 상태: 해결 — 기존 PP-001 작성 예정, PP-002 AI, PP-003 출시 기준 체계 유지
+- 문제 ID: `UX-INDEX-001`
+  - 관련 문서: UX-001, INDEX.md, README.md
+  - 문제 내용: 신규 UX 디렉토리와 UX-001이 문서 탐색 구조에 등록되지 않았다.
+  - 처리 상태: 해결 — INDEX·README 등록 완료
+
+### 수행한 수정
+
+- HEAD의 PF-005 기능 목적·범위·메시지 송수신·격리·입력 제한·데이터 계약·QA·출시 기준을 복원했다.
+- PF-005에 500×20 익명 조합, 서버 검증, `localStorage` 복원 요청, 3분 예약, 조합 고갈 처리와 인수 조건을 통합했다.
+- PP-003에 신규 채팅 인수 기준, 운영 검증, 지표와 출시 차단 조건을 추가했다.
+- PRD와 UX의 정책 번호를 PP-002·PP-003 체계로 바로잡고 PP-001 가격 데이터 처리 정책을 작성 예정 상태로 통일했다.
+- UX-001의 H1·상대 링크를 정리하고 INDEX·README에 UX 문서 영역과 관계를 등록했다.
+- 검사 결과와 사용자 결정을 `DOCUMENT-CHECK-HISTORY.md`에 기록했다.
+
+### 사용자 검토
+
+권장 처리 방향:
+
+- HEAD의 PF-005 전체 기능 명세를 복원한 뒤 신규 익명 식별·세션 정책을 해당 문서에 통합한다.
+- 신규 채팅 수치 정책의 승인을 확인한 뒤 PP-003의 인수 기준·운영 검증·출시 차단 조건에 반영한다.
+- 기존 정책 번호 체계인 PP-001 가격 데이터 처리 정책(작성 예정), PP-002 AI 분석 운영 정책, PP-003 MVP 출시 인수 기준을 유지하고 PRD·UX 참조를 바로잡는다.
+- UX-001의 H1 형식과 링크를 정리하고 INDEX·README에 UX 문서 영역을 등록한다.
+
+사용자 결정:
+
+- 500×20 익명 조합, `localStorage` 복원 요청, 3분 재연결 예약, 조합 고갈 시 자동 재시도를 승인된 정책으로 확정
+- 기존 PF-005 전체 명세를 복원한 뒤 신규 정책을 통합하고 PP-003·UX·INDEX·README까지 정리하는 권장안 승인
+
+반영 결과:
+
+- PRD의 `CAP-CHAT`, PF-005의 상세 `FR-CHAT-*`, UX-001의 사용자 흐름과 PP-003 출시 게이트가 같은 채팅 정책을 사용한다.
+- 회원가입·로그인 제외와 채팅 장애 시 정보 조회 유지 원칙을 보존했다.
+
+### 사용량
+
+- 이번 검사 token 사용량: 확인 불가
+- 잔여 token: 확인 불가
+- Codex usage/quota: 확인 불가
+
+### 검사 상태
+
+`완료`
+
+### 다음 검사 기준
+
+- baseline_commit: `24c2d0c098f95c63cc6a7a31dbb31bf8934d0f83`
+- checked_head: `24c2d0c098f95c63cc6a7a31dbb31bf8934d0f83`
+- working_tree_dirty: `true`
+- pending_uncommitted_changes: `DOCUMENT-CHECK-HISTORY.md`, `INDEX.md`, `README.md`, `MVP/product/PRD-001-MVP-제품-요구사항.md`, `MVP/product/features/PF-005-실시간-채팅.md`, `MVP/product/policies/PP-003-MVP-출시-인수-기준.md`, `MVP/product/ux/UX-001-사용자-흐름-및-정보-구조.md`
