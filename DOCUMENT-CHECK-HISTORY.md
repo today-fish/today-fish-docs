@@ -592,3 +592,95 @@ Baseline 이후 커밋된 문서와 working tree의 신규 제품 정책 및 연
 - checked_head: `24c2d0c098f95c63cc6a7a31dbb31bf8934d0f83`
 - working_tree_dirty: `true`
 - pending_uncommitted_changes: `DOCUMENT-CHECK-HISTORY.md`, `INDEX.md`, `README.md`, `MVP/product/PRD-001-MVP-제품-요구사항.md`, `MVP/product/features/PF-005-실시간-채팅.md`, `MVP/product/policies/PP-003-MVP-출시-인수-기준.md`, `MVP/product/ux/UX-001-사용자-흐름-및-정보-구조.md`
+
+## 2026-10-14 20:11 KST
+
+### 검사 범위
+
+- Baseline: `e0044472ce9dab683b59b95a06f087751cef631a`
+- 검사 HEAD: `e0044472ce9dab683b59b95a06f087751cef631a`
+- Working tree: dirty
+- 검사 방식: incremental
+
+직전 검사 결과가 HEAD에 반영된 것을 확인하고, 이후 추가된 PRD·UX 흐름 이미지와 신규 UX-002 및 연관 문서를 증분 검사했다. 파일명·문서 구조·내부 링크·요구사항 정합성·Source of Truth·INDEX·README를 확인했다.
+
+### 변경 감지
+
+- 추가: 3개
+- 수정: 5개
+- 삭제: 0개
+- 이동/파일명 변경: 0개
+- Untracked: 3개
+
+### 검사 대상
+
+- M `MVP/product/PRD-001-MVP-제품-요구사항.md`
+- M `MVP/product/ux/UX-001-사용자-흐름-및-정보-구조.md`
+- U `MVP/product/ux/UX-002-화면-상태-및-인터랙션-설계.md`
+- U `MVP/product/PRD-001-MVP-제품-요구사항.png`
+- U `MVP/product/ux/UX-001-사용자-흐름.png`
+- M `INDEX.md`
+- M `README.md`
+- M `DOCUMENT-CHECK-HISTORY.md` — 검사 메타데이터
+
+### 검사 결과
+
+- 파일명: 수정 — UX 흐름 이미지 제목을 한국어 파일명으로 통일
+- 디렉토리 구조: 정상
+- 문서 구조: 수정 — UX-002 H1 형식과 PRD·UX 이미지 설명 구조 정리
+- 프로젝트 용어: 정상
+- 내부 링크: 정상 — 로컬 링크·이미지 참조 0건 오류
+- 요구사항 중복: 수정 — UX 미정 식별자 중복 제거
+- 요구사항 정합성: 수정 — UX-002에서 확정한 검색·탭·채팅 패널·상태 전환을 PRD·UX-001에 동기화
+- Source of Truth: 수정 — UX-001 흐름과 UX-002 상태·인터랙션의 책임 범위 분리
+- INDEX.md: 수정 — UX-002 역할·주요 섹션·문서 관계 등록
+- README.md: 수정 — UX-002 탐색 링크 추가
+
+### 발견된 문제
+
+- 문제 ID: `UX-SYNC-001`
+  - 관련 문서: PRD-001, UX-001, UX-002
+  - 문제 내용: UX-002에서 검색 방식, 상세 탭 구조, 채팅 패널과 오류·복구 동작을 확정했지만 PRD와 UX-001은 같은 항목을 후속 또는 미정으로 유지했다.
+  - 처리 상태: 해결 — UX-002를 현재 상세 UX 기준으로 연결하고 기존 미정 표현을 갱신
+- 문제 ID: `UX-ID-001`
+  - 관련 문서: UX-001, UX-002
+  - 문제 내용: 두 문서가 같은 `UX-OPEN-*` ID를 서로 다른 의미로 사용하고 해결된 ID와 결정의 대응도 일치하지 않았다.
+  - 처리 상태: 해결 — 해결된 UX-001 목록을 제거하고 UX-002 잔여 항목을 `UX2-OPEN-*`로 분리
+- 문제 ID: `UX-INDEX-002`
+  - 관련 문서: UX-002, INDEX.md, README.md
+  - 문제 내용: 신규 UX-002가 통합 목차와 기본 탐색 경로에 등록되지 않았다.
+  - 처리 상태: 해결 — INDEX·README 및 문서 관계표에 등록
+- 문제 ID: `UX-ASSET-001`
+  - 관련 문서: PRD-001, UX-001, 두 PNG 이미지
+  - 문제 내용: UX 이미지 파일명이 한국어 원칙과 맞지 않고, 이미지의 예시 가격·날짜·참여자 수가 확정 요구사항으로 오인될 수 있었다.
+  - 처리 상태: 해결 — 파일명을 `UX-001-사용자-흐름.png`로 변경하고 예시 데이터 안내 추가
+
+### 수행한 수정
+
+- PRD의 UX-002 파일명·역할을 실제 문서와 일치시키고 해결된 `OPEN-15`를 제거했다.
+- UX-001의 검색, 상세 탭, 채팅 패널, 재진입, 차트·오류 상태를 UX-002 결정과 동기화했다.
+- UX-001의 해결된 `UX-OPEN-*` 목록을 후속 확인 사항 안내로 교체했다.
+- UX-002 H1을 표준 형식으로 정리하고 잔여 UX 항목을 `UX2-OPEN-*`로 분리했다.
+- PRD·UX 이미지에 예시 데이터 안내를 추가하고 UX 이미지 파일명을 한국어로 변경했다.
+- INDEX와 README에 UX-002의 역할, 탐색 순서와 문서 관계를 등록했다.
+
+### 사용자 검토
+
+발견된 문서 동기화·식별자·목차·이미지 표기 문제의 수정 진행을 사용자가 승인했다.
+
+### 사용량
+
+- 이번 검사 token 사용량: 확인 불가
+- 잔여 token: 확인 불가
+- Codex usage/quota: 확인 불가
+
+### 검사 상태
+
+`완료`
+
+### 다음 검사 기준
+
+- baseline_commit: `e0044472ce9dab683b59b95a06f087751cef631a`
+- checked_head: `e0044472ce9dab683b59b95a06f087751cef631a`
+- working_tree_dirty: `true`
+- pending_uncommitted_changes: `DOCUMENT-CHECK-HISTORY.md`, `INDEX.md`, `README.md`, `MVP/product/PRD-001-MVP-제품-요구사항.md`, `MVP/product/PRD-001-MVP-제품-요구사항.png`, `MVP/product/ux/UX-001-사용자-흐름-및-정보-구조.md`, `MVP/product/ux/UX-001-사용자-흐름.png`, `MVP/product/ux/UX-002-화면-상태-및-인터랙션-설계.md`

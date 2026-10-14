@@ -44,6 +44,7 @@
 ### `MVP/product/ux/`
 
 1. [UX-001-사용자-흐름-및-정보-구조.md](./MVP/product/ux/UX-001-사용자-흐름-및-정보-구조.md)
+2. [UX-002-화면-상태-및-인터랙션-설계.md](./MVP/product/ux/UX-002-화면-상태-및-인터랙션-설계.md)
 
 ### `MVP/product/policies/`
 
