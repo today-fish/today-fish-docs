@@ -791,3 +791,60 @@ Baseline 이후 커밋된 문서와 working tree의 신규 제품 정책 및 연
 - checked_head: `656841c9e99e7ede6b5c4f2432b353e19995b145`
 - working_tree_dirty: `true`
 - pending_uncommitted_changes: 위 수정 대상 14개 파일
+
+## 2026-10-16 03:20 KST
+
+### 검사 기준 및 범위
+
+- 기준 브랜치: `main`
+- 기준 HEAD: `e628da8a2f31920d6c28c32716e538cb88b4ab68`
+- 작업 시작 시 Working tree: clean
+- 검사 대상: Git 추적 Markdown 30개
+- 공식 문서 수에서 제외: `.gitignore` 대상 `AGENTS.md`, Codex `SKILL.md`, 환경변수 기록 Markdown
+- 환경변수 기록 파일의 내용은 읽거나 검사 출력에 포함하지 않았다.
+- 수정 범위: `MVP/product/features/PF-002-수산물-가격-차트.md`, 검사 기록용 `DOCUMENT-CHECK-HISTORY.md`
+
+### 잔여 정합성 문제와 수정
+
+- `CHART-OPEN-07`이 가격 표시 형식을 미정으로 남긴 문제를 해결했다.
+- 확정 문구: 가격 원 단위 정수, 변동률 소수 첫째 자리 반올림 (`PFV-004·005`).
+- `FR-CHART-04` 상세 조건·인수 조건, `CHART-TC-040~041`, 출시 인수 조건에 동일 표시 규칙을 반영했다.
+- `CHART-OPEN-11~12`는 승인된 기술 설계 보류임을 명시했다.
+- `CHART-OPEN-13`은 단순 가격 변경에 따른 과거 Insight 자동 재분석·무효화 금지와 `PP-002` 오류 처리 참조를 명시하고, 구현 상세는 확정하지 않았다.
+
+### 전체 검사 결과
+
+| 검사 항목 | 결과 |
+|---|---|
+| Git 추적 Markdown 수 | PASS — 30개 |
+| 상대 링크 | PASS — 오류 0건 |
+| INDEX 등록과 추적 파일 | PASS — 누락 0건, 비추적 대상 링크 0건 |
+| H1 존재 여부 | PASS — 누락 0건 |
+| 다중 H1 | 관찰 — 기존 11개, 신규 구조 결함으로 처리하지 않음 |
+| 요구사항·QA·OPEN ID 정의 중복 | PASS — 0건 |
+| 승인 정책 잔존 검색 | PASS — 잔여 충돌 0건 |
+| `PFV-025`·`PFV-026` 의미 | PASS — 각각 월간 AI 운영비 상한·Insight 버전 이력 보존 기간 보류 |
+| `PFV-013` | PASS — 등급·규격 혼합 기준 보류 유지 |
+| AI 생성 성공률 | PASS — PFV 식별자와 분리된 별도 미정·`PENDING` 유지 |
+| 수정 범위 | PASS — PF-002와 검사 이력만 변경 |
+
+첫 승인 정책 잔존 검색은 `rg` 기본 정규식이 look-around를 지원하지 않아 종료 코드 오류가 발생했다. 해당 결과는 폐기하고 `--pcre2`로 수정해 정상 종료한 재실행 결과만 위 표에 반영했다.
+
+### 남은 보류 및 출시 상태
+
+- 차트 라이브러리와 가격 정정 후 재집계 시점·처리 상세는 기술 설계 보류다.
+- `PFV-013`, `PFV-025`, `PFV-026`의 기존 보류 상태는 변경하지 않았다.
+- AI 생성 성공률 목표와 배치 주기·생성 SLA 동시 충족 방식의 기존 보류 상태도 변경하지 않았다.
+- `PP-001 가격 데이터 처리 정책`은 작성 예정 상태를 유지한다.
+- 실제 데이터 수집·성능·보안 시험 증빙을 이번 검사에서 생성하거나 확인하지 않았다.
+- 문서 정책 정합성 검사는 통과했지만 최종 출시 판정은 계속 `PENDING`이다.
+- 새로 발견한 범위 밖 정책 충돌 및 사용자 검토 필요 항목: 없음
+- 커밋·푸시: 수행하지 않음
+- token 사용량 및 잔여 token: 확인 불가
+
+### 다음 검사 기준
+
+- baseline_commit: `e628da8a2f31920d6c28c32716e538cb88b4ab68`
+- checked_head: `e628da8a2f31920d6c28c32716e538cb88b4ab68`
+- working_tree_dirty: `true`
+- pending_uncommitted_changes: `MVP/product/features/PF-002-수산물-가격-차트.md`, `DOCUMENT-CHECK-HISTORY.md`
