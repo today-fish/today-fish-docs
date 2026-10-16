@@ -10,8 +10,6 @@
 
 1. [INDEX.md — 통합 문서 목차](./INDEX.md)
    - 전체 문서의 역할, 주요 섹션, 읽기 순서와 문서 관계를 안내한다.
-2. [DOCUMENT-CHECK-HISTORY.md — 문서 일관성 검사 이력](./DOCUMENT-CHECK-HISTORY.md)
-   - 문서 검사 범위, 수정 결과와 다음 검사 기준을 기록한다.
 
 ### `MVP/product/decisions/`
 
@@ -61,6 +59,15 @@
 1. [POC-001-aT-공영도매시장-API-데이터.md](./MVP/poc/POC-001-aT-공영도매시장-API-데이터.md)
 2. [POC-002-외부-가격-데이터-검증-체크리스트.md](./MVP/poc/POC-002-외부-가격-데이터-검증-체크리스트.md)
 3. [POC-003-수산물-가격-데이터-연계.md](./MVP/poc/POC-003-수산물-가격-데이터-연계.md)
+
+## 디자인 시스템
+
+- [디자인 시스템](./design-system/README.md) — 최신 디자인 기준, 토큰, HTML 미리보기
+
+## 문서 작업 및 PR
+
+- [Git 및 PR 운영 규칙](./.github/CONTRIBUTING.md)
+- [PR 작성 템플릿](./.github/PULL_REQUEST_TEMPLATE.md)
 
 ## 기본 탐색 순서
 
