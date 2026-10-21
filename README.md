@@ -11,7 +11,7 @@
 
 ## 디자인 시스템
 
-- [디자인 시스템](./design-system/README.md) — 최신 디자인 기준, 토큰, HTML 미리보기
+- [디자인 시스템](./design-system/README.md) — 최신 디자인 기준·토큰·미리보기와 FG 설계 및 FV 검증 문서의 역할·읽기 순서
 
 ## 문서 작업 및 PR
 

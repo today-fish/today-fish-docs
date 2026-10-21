@@ -61,6 +61,18 @@
 - [HTML 미리보기](./design-system/preview/index.html) — 컴포넌트와 인터랙션
 - [디자인 토큰](./design-system/tokens/tokens.json) — 디자인 토큰 정의
 
+Figma 설계는 FG-001 → FG-002 → FG-003 → FG-004 순으로 읽고, 검증 상태·변경 영향·최종 확인은 FV-001 → FV-002 → FV-003 순으로 읽는다. 제품 요구사항과 UX 원본은 PRD·PF·UX 문서를 기준으로 한다.
+
+| 문서 | 위치·역할 | 주요 관계 |
+|---|---|---|
+| [FG-001 Figma 설계 및 단계별 승인 기준](./design-system/figma/FG-001-Figma-설계-및-단계별-승인-기준.md) | `design-system/figma/` — 설계 단계와 승인 게이트 | PRD·PF·UX·DS 원본 준수 |
+| [FG-002 컴포넌트·Variant 및 명명 규칙](./design-system/figma/FG-002-컴포넌트-Variant-및-명명-규칙.md) | `design-system/figma/` — 컴포넌트 체계와 이름 | FG-001, FG-003, FV-002 |
+| [FG-003 화면·상태·프로토타입 설계](./design-system/figma/FG-003-화면-상태-프로토타입-설계.md) | `design-system/figma/` — SCR/ST 화면과 UF-01~06 Prototype | UX-001·002, PF-001~005, FV-001·003 |
+| [FG-004 디자인 토큰 동기화 정책](./design-system/figma/FG-004-디자인-토큰-동기화-정책.md) | `design-system/figma/` — 토큰 SSOT와 동기화 절차 | DS-001, tokens.json, FV-001·002 |
+| [FV-001 요구사항 추적 및 검증 상태](./design-system/verification/FV-001-요구사항-추적-및-검증-상태.md) | `design-system/verification/` — 원본 ID와 단계별 상태·증빙 | PRD·PF·UX, FG-003, PP-003 |
+| [FV-002 Override 및 컴포넌트 의존성 관리](./design-system/verification/FV-002-Override-및-의존성-관리.md) | `design-system/verification/` — Override 및 영향 관계 | FG-002·004, FV-001·003 |
+| [FV-003 접근성·반응형·E2E 검증 계획](./design-system/verification/FV-003-접근성-반응형-E2E-검증-계획.md) | `design-system/verification/` — WCAG·반응형·E2E 검증 기준 | FG-001·003, FV-001·002, PP-003 |
+
 ### `.github/`
 
 Git 및 PR 운영 규칙을 관리한다.
