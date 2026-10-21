@@ -697,6 +697,9 @@
         font-size: 16px;
         font-variant-numeric: tabular-nums;
       }
+      .chart-selection {
+        display: none;
+      }
       .chart-caption {
         margin-top: 12px;
         color: var(--muted);
@@ -910,18 +913,31 @@
         .main {
           padding: 16px;
         }
-        .chart-tooltip {
-          right: 3px;
-          top: 2px;
-          padding: 7px 9px;
-          min-width: 105px;
-          font-size: 10px;
-        }
-        .chart-tooltip strong {
-          font-size: 13px;
-        }
         .chart-head {
           align-items: flex-start;
+        }
+      }
+      @media (max-width: 767px) {
+        .chart-tooltip {
+          display: none !important;
+        }
+        .chart-selection {
+          position: sticky;
+          bottom: 8px;
+          z-index: 3;
+          display: block;
+          margin-top: 12px;
+          padding: 12px 14px;
+          border: 1px solid var(--border);
+          border-radius: var(--radius-md);
+          background: var(--surface);
+          box-shadow: var(--shadow-tooltip);
+          color: var(--ink);
+        }
+      }
+      @media (min-width: 768px) {
+        .chart-tooltip:not(.hidden) {
+          display: block;
         }
       }
       @media (prefers-reduced-motion: reduce) {
@@ -3653,7 +3669,7 @@
               </div>
               <div
                 id="chart-selection"
-                class="chart-caption"
+                class="chart-caption chart-selection"
                 aria-live="polite"
               >
                 기간 미선택 · 유효한 가격 점을 선택하세요.
@@ -4600,7 +4616,8 @@
               </div>
               <p class="chat04-note">
                 UI 시험을 위한 샘플 닉네임·색상입니다. 서버의 500×20 조합 할당을
-                구현하거나 20색 팔레트를 확정한 것이 아닙니다.
+                구현하지 않습니다. 닉네임 20색 HEX 팔레트는 Q26 승인 완료이며,
+                실제 표시 배경의 텍스트 대비 4.5:1 이상과 색각 구분성은 검증 별도입니다.
               </p>
             </article>
             <article class="panel">
@@ -4625,7 +4642,7 @@
                   </tr>
                   <tr>
                     <th>닉네임 컬러</th>
-                    <td>20색 팔레트 미확정 · UI 데모 색상만 임시 사용</td>
+                    <td>Q26 승인 완료 · 실제 배경 대비 4.5:1 및 색각 구분성 검증 별도</td>
                   </tr>
                 </tbody>
               </table>
@@ -4752,8 +4769,8 @@
                 <tr>
                   <th>미승인 토큰</th>
                   <td>
-                    실제 숫자·치수·스켈레톤 색상/속도 · 20색 채팅 팔레트 등은
-                    변경 없이 Draft
+                    실제 숫자·치수·스켈레톤 색상/속도는 Draft. 닉네임 20색 HEX는
+                    Q26 승인 완료이며, 실제 배경 대비 4.5:1·색각 구분성 검증은 별도
                   </td>
                 </tr>
               </tbody>
@@ -4922,7 +4939,8 @@
       ];
       let mode = "half",
         selected = null,
-        hovered = null;
+        hovered = null,
+        missingNotice = null;
       const chartGeometry = {
         left: 56,
         right: 696,
@@ -4938,6 +4956,23 @@
       }
       function dataForMode() {
         return mode === "half" ? dataHalf : dataMonth;
+      }
+      function updateSelectionInfo() {
+        const info = q("#chart-selection");
+        if (missingNotice !== null) {
+          const retained =
+            selected === null
+              ? "유효한 선택과 Insight 조회는 없습니다."
+              : `기존 선택 ${periodLabel(selected)} · ${Math.round(dataForMode()[selected] * 1000).toLocaleString("ko-KR")}원/kg 및 Insight를 유지합니다.`;
+          info.textContent = `자료 없음 · ${periodLabel(missingNotice)} · ${retained}`;
+          return;
+        }
+        if (selected === null) {
+          info.textContent = "기간 미선택 · 유효한 가격 점을 선택하세요.";
+          return;
+        }
+        const value = dataForMode()[selected];
+        info.textContent = `${periodLabel(selected)} · ${Math.round(value * 1000).toLocaleString("ko-KR")}원/kg (가상 데이터) · 해당 기간 Insight 조회 대상`;
       }
       function pointCoord(i) {
         const data = dataForMode(),
@@ -5028,21 +5063,16 @@
       function pick(i) {
         const v = dataForMode()[i];
         if (v == null) {
-          q("#chart-selection").textContent =
-            (selected == null ? "기간 미선택 · " : "기존 선택 유지 · ") +
-            periodLabel(i) +
-            " : 자료 없음";
+          missingNotice = i;
+          updateSelectionInfo();
           showHover(i);
           return;
         }
         selected = i;
+        missingNotice = null;
         hovered = i;
         draw();
-        q("#chart-selection").textContent =
-          periodLabel(i) +
-          " · " +
-          Math.round(v * 1000).toLocaleString("ko-KR") +
-          "원/kg (가상 데이터) · 해당 기간 Insight 조회 대상";
+        updateSelectionInfo();
       }
       function draw() {
         const target = q("#interactive-chart");
@@ -5210,6 +5240,7 @@
       }
       q("#interactive-chart").addEventListener("pointerleave", clearHover);
       window.addEventListener("resize", () => {
+        updateSelectionInfo();
         if (hovered !== null || selected !== null) updateTooltip();
       });
       qa("[data-granularity]").forEach((btn) =>
@@ -5218,6 +5249,7 @@
           mode = btn.dataset.granularity;
           selected = null;
           hovered = null;
+          missingNotice = null;
           qa("[data-granularity]").forEach((e) => {
             const on = e === btn;
             e.classList.toggle("active", on);
@@ -6203,7 +6235,7 @@
           <div class="chat04-me">
             <span
               class="chat04-color"
-              style="background: var(--ocean-500)"
+              style="background: #0A5CF3"
             ></span>
             푸른 고래 (나) · 자동 할당 예시
           </div>
@@ -6288,6 +6320,28 @@
     <script>
       (() => {
         const $ = (id) => document.getElementById(id);
+        const nicknamePalette = [
+          "#D21309",
+          "#B64408",
+          "#8F5F06",
+          "#716B05",
+          "#577205",
+          "#387705",
+          "#177A05",
+          "#057A17",
+          "#057939",
+          "#05775B",
+          "#05757B",
+          "#076FA7",
+          "#0A5CF3",
+          "#3B45F7",
+          "#6A3BF7",
+          "#9620F6",
+          "#B109CF",
+          "#C008A5",
+          "#CB0874",
+          "#D1093B",
+        ];
         const panel = $("chat04-panel"),
           scrim = $("chat04-scrim"),
           fab = $("chat04-fab"),
@@ -6452,7 +6506,7 @@
           }
           lastSent = t;
           minute.push(t);
-          item("푸른 고래", "var(--ocean-500)", msg, true);
+          item("푸른 고래", nicknamePalette[12], msg, true);
           ta.value = "";
           resize();
           feedback.textContent = "전송됨 · 데모 메시지는 저장되지 않습니다";
@@ -6477,7 +6531,7 @@
         $("chat04-inject").addEventListener("click", () =>
           item(
             "초록 물결",
-            "var(--mint-500)",
+            nicknamePalette[7],
             "가격 흐름을 같이 확인해 보셨나요? (데모)",
           ),
         );
@@ -6548,21 +6602,21 @@
         );
         item(
           "초록 물결",
-          "var(--mint-500)",
+          nicknamePalette[7],
           "오늘 갈치 가격이 좀 올랐네요!",
           false,
           false,
         );
         item(
           "푸른 고래",
-          "var(--ocean-500)",
+          nicknamePalette[12],
           "저도 지난 반월과 비교해 봤어요.",
           true,
           false,
         );
         item(
           "잔잔한 파도",
-          "var(--chart-down)",
+          nicknamePalette[9],
           "정보 같이 보고 이야기해요.",
           false,
           false,
