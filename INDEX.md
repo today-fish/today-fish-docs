@@ -44,6 +44,15 @@
 
 여러 기능에 공통 적용되는 운영·출시 정책을 정의하는 `PP-NNN` 문서가 위치한다. `PP-001 가격 데이터 처리 정책`은 작성 예정이다.
 
+### `MVP/architecture/frontend/`
+
+프론트엔드 아키텍처와 기술 선택 기록을 관리한다.
+
+- [README.md](./MVP/architecture/frontend/README.md) — 프론트엔드 아키텍처 개요와 ADR 읽기 순서
+- [FE-ADR-001 프레임워크 및 버전 선정](./MVP/architecture/frontend/adr/FE-ADR-001-프레임워크-및-버전-선정.md) — Next.js·React 및 App Router 선정
+- [FE-ADR-002 렌더링 전략 선정](./MVP/architecture/frontend/adr/FE-ADR-002-렌더링-전략-선정.md) — SSG + CSR 전략
+- [FE-ADR-003 데이터 캐싱 및 갱신 전략](./MVP/architecture/frontend/adr/FE-ADR-003-데이터-캐싱-및-갱신-전략.md) — TanStack Query·Fetch API 및 캐시 정책
+
 ### `MVP/research/user/`
 
 현재 `UR-NNN` 문서가 위치한다. 문서를 읽을 때 관찰된 사실과 제품 가설을 구분한다.
@@ -113,7 +122,7 @@ Git 및 PR 운영 규칙을 관리한다.
 1. [PD-005 서비스 성장 전략](./MVP/product/decisions/PD-005-서비스-성장-전략.md)에서 Phase 2·3 확장 순서를 확인한다.
 2. [PD-006 비즈니스 모델](./MVP/product/decisions/PD-006-비즈니스-모델.md)에서 비영리 MVP, 비용 원칙, 수익화 검토 조건을 확인한다.
 
-제품 수준의 기술 원칙은 정의되어 있지만 API, 데이터 모델, NFR, 보안·운영 정책을 구현 가능한 수준으로 구체화한 Tech Spec 또는 ADR은 아직 존재하지 않는다.
+제품 수준의 기술 원칙은 PRD와 제품 결정 문서에서 확인하고, 프론트엔드 기술 선택과 구현 기준은 [프론트엔드 아키텍처](./MVP/architecture/frontend/README.md) 및 FE-ADR-001~003에서 확인한다. API, 백엔드 데이터 모델, 보안·운영 정책을 구현 가능한 수준으로 구체화한 문서는 별도 확인이 필요하다.
 
 ## 제품 요구사항 문서
 

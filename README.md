@@ -13,6 +13,10 @@
 
 - [디자인 시스템](./design-system/README.md) — 최신 디자인 기준·토큰·미리보기와 FG 설계 및 FV 검증 문서의 역할·읽기 순서
 
+## 프론트엔드 아키텍처
+
+- [프론트엔드 아키텍처](./MVP/architecture/frontend/README.md) — 프레임워크, 렌더링, 데이터 캐싱 ADR과 읽기 순서
+
 ## 문서 작업 및 PR
 
 - [Git 및 PR 운영 규칙](./.github/CONTRIBUTING.md)
