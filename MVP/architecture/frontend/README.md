@@ -7,6 +7,11 @@
 1. [FE-ADR-001 프레임워크 및 버전 선정](./adr/FE-ADR-001-프레임워크-및-버전-선정.md) — Next.js, React, App Router
 2. [FE-ADR-002 렌더링 전략 선정](./adr/FE-ADR-002-렌더링-전략-선정.md) — SSG + CSR
 3. [FE-ADR-003 데이터 캐싱 및 갱신 전략](./adr/FE-ADR-003-데이터-캐싱-및-갱신-전략.md) — TanStack Query, Fetch API, 캐시·오류 정책
+4. [FE-ADR-004 스타일링 및 디자인 시스템 적용 전략](./adr/FE-ADR-004-스타일링-및-디자인-시스템-적용-전략.md)
+5. [FE-ADR-005 클라이언트 상태 관리 전략](<./adr/FE-ADR-005. 클라이언트 상태 관리 전략.md>)
+6. [FE-ADR-006 가격 차트 라이브러리 선정](./adr/FE-ADR-006-가격-차트-라이브러리-선정.md)
+7. [FE-ADR-007 백엔드 REST API 연동 및 통신 전략](./adr/FE-ADR-007-백엔드-REST-API-연동-및-통신-전략.md)
+8. [FE-ADR-008 실시간 채팅 WebSocket 연결 전략](./adr/FE-ADR-008-실시간-채팅-WebSocket-연결-전략.md)
 
 ## 관련 제품 문서
 
