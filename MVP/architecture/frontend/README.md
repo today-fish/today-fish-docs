@@ -12,6 +12,7 @@
 6. [FE-ADR-006 가격 차트 라이브러리 선정](./adr/FE-ADR-006-가격-차트-라이브러리-선정.md)
 7. [FE-ADR-007 백엔드 REST API 연동 및 통신 전략](./adr/FE-ADR-007-백엔드-REST-API-연동-및-통신-전략.md)
 8. [FE-ADR-008 실시간 채팅 WebSocket 연결 전략](./adr/FE-ADR-008-실시간-채팅-WebSocket-연결-전략.md)
+9. [FE-ADR-009 MVP 익명 사용자 식별 및 보안 토큰 관리 전략](./adr/FE-ADR-009-MVP-익명-사용자-식별-및-보안-토큰-관리-전략.md)
 
 ## 관련 제품 문서
 
