@@ -84,6 +84,7 @@
 - [FE-ADR-006-가격-차트-라이브러리-선정.md](./MVP/architecture/frontend/adr/FE-ADR-006-가격-차트-라이브러리-선정.md)
 - [FE-ADR-007-백엔드-REST-API-연동-및-통신-전략.md](./MVP/architecture/frontend/adr/FE-ADR-007-백엔드-REST-API-연동-및-통신-전략.md)
 - [FE-ADR-008-실시간-채팅-WebSocket-연결-전략.md](./MVP/architecture/frontend/adr/FE-ADR-008-실시간-채팅-WebSocket-연결-전략.md)
+- [FE-ADR-009-MVP-익명-사용자-식별-및-보안-토큰-관리-전략.md](./MVP/architecture/frontend/adr/FE-ADR-009-MVP-익명-사용자-식별-및-보안-토큰-관리-전략.md)
 
 ### `design-system/`
 
