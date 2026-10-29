@@ -85,6 +85,21 @@
 - [FE-ADR-007-백엔드-REST-API-연동-및-통신-전략.md](./MVP/architecture/frontend/adr/FE-ADR-007-백엔드-REST-API-연동-및-통신-전략.md)
 - [FE-ADR-008-실시간-채팅-WebSocket-연결-전략.md](./MVP/architecture/frontend/adr/FE-ADR-008-실시간-채팅-WebSocket-연결-전략.md)
 - [FE-ADR-009-MVP-익명-사용자-식별-및-보안-토큰-관리-전략.md](./MVP/architecture/frontend/adr/FE-ADR-009-MVP-익명-사용자-식별-및-보안-토큰-관리-전략.md)
+- [FE-ADR-010-프론트엔드-배포-및-CI-CD-전략.md](./MVP/architecture/frontend/adr/FE-ADR-010-프론트엔드-배포-및-CI-CD-전략.md)
+- [FE-ADR-011-프론트엔드-오류-처리-및-사용자-피드백-전략.md](./MVP/architecture/frontend/adr/FE-ADR-011-프론트엔드-오류-처리-및-사용자-피드백-전략.md)
+
+### `MVP/architecture/backend/`
+
+백엔드 아키텍처의 기술 선택과 운영 원칙을 관리한다. ADR 요약과 미정 의사결정은 [README.md](./MVP/architecture/backend/README.md)를 확인한다.
+
+- [README.md](./MVP/architecture/backend/README.md)
+- [BE-ADR-001-백엔드-아키텍처.md](./MVP/architecture/backend/BE-ADR-001-백엔드-아키텍처.md)
+- [BE-ADR-002-런타임-및-웹-프레임워크.md](./MVP/architecture/backend/BE-ADR-002-런타임-및-웹-프레임워크.md)
+- [BE-ADR-003-빌드-및-의존성-관리.md](./MVP/architecture/backend/BE-ADR-003-빌드-및-의존성-관리.md)
+- [BE-ADR-004-데이터-접근-및-영속성.md](./MVP/architecture/backend/BE-ADR-004-데이터-접근-및-영속성.md)
+- [BE-ADR-005-데이터베이스-및-AWS-인프라.md](./MVP/architecture/backend/BE-ADR-005-데이터베이스-및-AWS-인프라.md)
+- [BE-ADR-006-스키마-변경-및-백업.md](./MVP/architecture/backend/BE-ADR-006-스키마-변경-및-백업.md)
+- [BE-ADR-007-가격수집-PDF-AI-파이프라인.md](./MVP/architecture/backend/BE-ADR-007-가격수집-PDF-AI-파이프라인.md)
 
 ### `design-system/`
 
@@ -112,11 +127,11 @@
 
 개발 환경과 설정에 관한 프로젝트 문서를 보관한다.
 
-- [ENV-001-카.md](./env/ENV-001-%EC%B9%B4.md)
+- [ENV-001-키.md](./env/ENV-001-%ED%82%A4.md)
 
 ### `.github/`
 
-브랜치·커밋·PR 작성과 검토를 위한 저장소 운영 문서를 관리한다.
+브랜치·커밋 운영과 Type + Area 라벨 기반 PR 작성·검토 규칙을 관리한다.
 
 - [CONTRIBUTING.md](./.github/CONTRIBUTING.md)
 - [PULL_REQUEST_TEMPLATE.md](./.github/PULL_REQUEST_TEMPLATE.md)
