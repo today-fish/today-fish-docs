@@ -3,3 +3,7 @@
 /env/**
 .codex/
 .github/
+!.github/
+.github/*
+!.github/CONTRIBUTING.md
+!.github/PULL_REQUEST_TEMPLATE.md
