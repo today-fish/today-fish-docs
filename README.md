@@ -67,6 +67,7 @@
 - [POC-001-aT-공영도매시장-API-데이터.md](./MVP/poc/POC-001-aT-공영도매시장-API-데이터.md)
 - [POC-002-외부-가격-데이터-검증-체크리스트.md](./MVP/poc/POC-002-외부-가격-데이터-검증-체크리스트.md)
 - [POC-003-수산물-가격-데이터-연계.md](./MVP/poc/POC-003-수산물-가격-데이터-연계.md)
+- [POC-004-KMI-FOC-PDF-수집-기술-검증.md](./MVP/poc/POC-004-KMI-FOC-PDF-수집-기술-검증.md)
 
 ### `MVP/architecture/frontend/`
 
