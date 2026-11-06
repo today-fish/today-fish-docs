@@ -3,7 +3,7 @@
 - **상태:** Accepted
 - **버전:** v0.4
 - **승인일:** 2026-11-06
-- **관련 문서:** [BE-TECH-SPEC-002 v0.4](BE-TECH-SPEC-002-가격-데이터-모델링-및-산지-도매가격-산출.md), BE-ADR-007, BE-ADR-008, POC-003. 논리 ERD는 본 문서 §6.1과 BE-TECH-SPEC-002 §5.2를 함께 기준으로 한다.
+- **관련 문서:** [BE-TECH-SPEC-002 v0.5](BE-TECH-SPEC-002-가격-데이터-모델링-및-산지-도매가격-산출.md), BE-ADR-007, BE-ADR-008, POC-003. 논리 ERD는 본 문서 §6.1과 BE-TECH-SPEC-002 §5.2를 함께 기준으로 한다.
 
 ## Summary
 

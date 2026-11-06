@@ -1,7 +1,7 @@
 # BE-TECH-SPEC-002-가격-데이터-모델링-및-산지-도매가격-산출
 
 - **상태:** Accepted
-- **버전:** v0.4
+- **버전:** v0.5
 - **승인일:** 2026-11-06
 - **관련 문서:** [BE-TECH-SPEC-001 v0.4](BE-TECH-SPEC-001-데이터-수집-정규화-검증.md), 논리 ERD는 BE-TECH-SPEC-001 §6.1과 본 문서 §5.2를 함께 기준으로 한다.
 
@@ -37,14 +37,23 @@ public interface PriceObservationSelector {
     List<EligiblePriceObservation> select(PriceAggregationCriteria criteria);
 }
 
-// 승인된 표본 수 정책에 따라 대표가격을 산출한다.
+// 같은 날짜의 적격 관측값에서 일별 가격을 산출한다.
+public interface DailyPriceCalculator {
+    Optional<DailyPrice> calculate(List<EligiblePriceObservation> observations);
+}
+
+// 유효 일별 가격을 단순 산술평균해 기간 가격을 산출한다.
 public interface PeriodPriceCalculator {
-    CalculationResult calculate(List<EligiblePriceObservation> observations);
+    PeriodPriceResult calculate(
+        PriceAggregationCriteria criteria,
+        List<DailyPrice> dailyPrices
+    );
 }
 
 // 원천 선택, 입력 조회, 계산 및 결과 저장을 조정한다.
 public class PeriodPriceService {
     PeriodPriceCalculator calculator;
+    DailyPriceCalculator dailyCalculator;
     PriceObservationSelector selector;
     PeriodPriceRepository repository;
 }
@@ -67,6 +76,13 @@ public record EligiblePriceObservation(
     BigDecimal priceKrwPerKg
 ) {}
 
+public record DailyPrice(
+    LocalDate observedAt,
+    BigDecimal priceKrwPerKg,
+    int observationCount,
+    int excludedCount
+) {}
+
 // 저장되는 계산 결과 모델; 실제 구현에서는 Entity/Repository로 매핑한다.
 public class PeriodPrice {
     Long id;
@@ -79,15 +95,15 @@ public class PeriodPrice {
     String provider;
     String dataset;
     Map<String, Object> referenceFilter;
-    int observationCount;
-    int excludedCount;
-    int observedDayCount;
+    int observationCount;  // trim 전, 해당 기간의 적격 독립 원본 관측 총수
+    int excludedCount;     // 일별 산출에서 절사한 원본 관측 총수
+    int observedDayCount;  // 유효 일별 가격이 산출된 날짜 수
     String calculationPolicyVersion;
     Instant calculatedAt;
 }
 ```
 
-`PriceObservationSelector`는 BE-TECH-SPEC-001의 검증 상태와 출처를 확인하고 가격 도메인의 비교 조건을 적용한다. `PeriodPriceCalculator`는 선택된 값에 집계 정책만 적용하며 원천 데이터 수집이나 정규화를 수행하지 않는다.
+`PriceObservationSelector`는 BE-TECH-SPEC-001의 검증 상태와 출처를 확인하고 가격 도메인의 비교 조건을 적용한다. 계산기는 날짜별 가격 산출과 기간 가격 산출을 분리한다. 어느 계산기도 원천 수집이나 정규화를 수행하지 않는다.
 
 ### `period_price`
 
@@ -101,10 +117,10 @@ public class PeriodPrice {
 | `price`                      | 대표 가격 (KRW/kg)           |
 | `provider`, `dataset`        | 기준 원천 및 데이터셋        |
 | `reference_filter`           | 기준 상품·시장 조건          |
-| `observation_count`          | 집계에 사용된 유효 관측 건수 |
-| `excluded_count`             | 절사 제외 건수               |
-| `observed_day_count`         | 유효 관측일 수               |
-| `calculation_policy_version` | 적용한 계산 정책 버전        |
+| `observation_count`          | 절사 전 기간 내 적격 독립 원본 관측 총수. 기간 평균의 가중치가 아님 |
+| `excluded_count`             | 일별 절사 규칙으로 제외한 원본 관측 총수 |
+| `observed_day_count`         | 유효 일별 가격이 산출되어 기간 평균에 포함된 날짜 수; 평균의 분모 |
+| `calculation_policy_version` | 적용한 계산 정책 버전 (`price-aggregation-v2`) |
 | `calculated_at`              | 계산 시각                    |
 
 ## 3. Aggregation Eligibility
@@ -123,7 +139,13 @@ public class PeriodPrice {
 
 ## 4. Aggregation Policy
 
-집계는 어종, 가격 유형, 기준 원천, 비교 조건 및 기간별로 독립 수행한다. 기준 원천과 참조 조건은 결과에 기록한다.
+집계는 어종, 가격 유형, 기준 원천, 비교 조건 및 기간별로 독립 수행한다. 동일 날짜·어종·가격 유형·기준 원천·비교 가능한 상품 조건·표준 단위의 독립 관측값을 한 일별 그룹으로 묶는다. 서로 다른 날짜 또는 기준 원천의 관측값은 같은 일별 표본에 합치지 않는다. 기준 원천과 참조 조건은 결과에 기록한다.
+
+계산은 다음 두 단계로 수행한다.
+
+**1단계 — 일별 가격 산출:** 각 일별 그룹의 적격 독립 관측 건수로 아래 표본 수 규칙을 적용한다. 0건이면 그 날짜의 일별 가격을 만들지 않는다.
+
+**2단계 — 반월·월 가격 산출:** 요청 기간 내 1단계에서 산출된 유효 일별 가격을 단순 산술평균한다. 관측이 없는 날짜는 제외하며, 원본 관측 건수를 가중치로 쓰지 않는다. 기간 경계는 반월 1~15일·16일~말일, 월별 1일~말일이다.
 
 | 유효 관측 건수 | 산출 방식                                 | 제외 건수 |
 | -------------: | ----------------------------------------- | --------: |
@@ -131,13 +153,30 @@ public class PeriodPrice {
 |          1~4건 | 중앙값                                    |         0 |
 |            0건 | 결과를 산출하지 않음                      |         0 |
 
-짝수 개 중앙값은 가운데 두 값의 산술평균이다. 입력은 독립적인 일별 관측값으로 구성하며 중복 일자값으로 표본 수를 부풀리지 않는다. 결과 가격의 기준 단위는 KRW/kg이다. 승인된 변환 근거가 없는 서로 다른 단위는 함께 집계하지 않는다.
+짝수 개 중앙값은 가운데 두 값의 산술평균이다. 입력은 독립적인 일별 그룹으로 구성하며 중복 관측으로 표본 수를 부풀리지 않는다. 결과 가격의 기준 단위는 KRW/kg이다. 승인된 변환 근거가 없는 서로 다른 단위는 함께 집계하지 않는다.
+
+### 4.1 Calculation Examples and Boundary Tests
+
+아래 일별 테스트의 입력은 모두 같은 관측일·어종·가격 유형·기준 원천·비교 가능한 상품 조건·표준 단위의 독립적인 유효 관측값이다.
+
+| 테스트 | 일별 입력 가격 | 유효 관측 건수 | 일별 결과 | 일별 `excluded_count` |
+|---|---|---:|---:|---:|
+| DAILY-00 | 없음 | 0 | 미산출 | 0 |
+| DAILY-01 | 12,000 | 1 | 12,000 | 0 |
+| DAILY-04 | 10,000, 12,000, 14,000, 20,000 | 4 | 13,000 (중앙값) | 0 |
+| DAILY-05 | 10,000, 11,000, 12,000, 13,000, 30,000 | 5 | 12,000 (10,000·30,000 절사) | 2 |
+
+기간 계산 테스트에서는 같은 기준 그룹으로 1일차 입력 `[10,000, 14,000]`의 일별 중앙값이 12,000, 2일차 입력 `[1,000, 10,000, 20,000, 30,000, 100,000]`의 일별 절사평균이 20,000이라고 가정한다. 3일차에는 관측값이 없다. 기간 가격은 `(12,000 + 20,000) / 2 = 16,000`이다. 결과 지표는 `observation_count=7`(절사 전 적격 원본 관측 합계), `excluded_count=2`, `observed_day_count=2`이며, `observation_count`를 기간 가격 가중치로 사용하지 않는다. 원본 관측 수로 잘못 가중하면 약 17,714원이 되어 결과가 달라진다.
+
+기간 단순평균 경계 테스트는 유효 일별 가격 0건이면 기간 결과 미산출, 1건이면 해당 일별 가격 그대로, 2건 이상이면 유효 일별 가격 산술평균으로 확인한다. 누락 날짜는 관측일 수나 분모에 포함하지 않는다.
+
+이 계약의 정책 식별자는 `price-aggregation-v2`다. 일별 표본 수 규칙이나 기간 집계 단계를 변경하면 새 정책 식별자를 부여하고 과거 계산 결과는 기존 식별자와 함께 보존한다.
 
 반월 기간은 매월 1~15일과 16일~말일이며, 월 기간은 매월 1일~말일이다. 집계에는 관측 기준일을 사용하고 발행일과 게시일은 관측일과 구분한다.
 
 ## 5. Result Traceability
 
-계산 결과에는 어종, 가격 유형, granularity, 기간, 기준 원천, 참조 조건, 관측 건수, 절사 건수, 관측일 수, 계산 정책 버전 및 계산 시각을 기록한다. 각 결과를 산출한 입력 관측값을 추적할 수 있도록 한다. 재계산 시 과거 결과와 정책 버전을 구분해 보존한다.
+계산 결과에는 어종, 가격 유형, granularity, 기간, 기준 원천, 참조 조건, trim 전 적격 독립 원본 관측 총수(`observation_count`), 일별 절사 총수(`excluded_count`), 유효 일별 가격 수(`observed_day_count`), 계산 정책 버전 및 계산 시각을 기록한다. `observation_count`는 기간 가격의 평균 분모나 가중치가 아니다. 기간 평균 분모는 `observed_day_count`다. 각 일별 결과와 원본 입력 관측값을 추적할 수 있도록 한다. 이번 계산 단계 구분 변경으로 새 결과는 `price-aggregation-v2`를 기록한다. 기존 결과와 정책 버전은 보존하고 영향을 받는 반월·월 결과를 v2로 재계산한다.
 
 ### 5.1 Aggregation Pipeline
 
@@ -146,14 +185,19 @@ flowchart LR
     A[BE-TECH-SPEC-001 정규화 관측값] --> B[VALID 상태·출처 확인]
     B --> C[어종·가격 유형·기간 선택]
     C --> D[기준 원천·상품·시장 조건 적용]
-    D --> E[독립 일별 관측값 구성]
-    E --> F{유효 관측 건수}
-    F -->|5건 이상| G[최고·최저 각 1건 제외 후 산술평균]
-    F -->|1~4건| H[중앙값]
-    F -->|0건| I[결과 미생성]
-    G --> J[PeriodPrice 저장]
+    D --> E[날짜별 독립 관측 그룹 구성]
+    E --> F{해당 날짜 유효 관측 건수}
+    F -->|5건 이상| G[최고·최저 각 1건 제외 후 일별 산술평균]
+    F -->|1~4건| H[중앙값으로 일별 가격 산출]
+    F -->|0건| I[해당 날짜 결과 없음]
+    G --> J[유효 일별 가격 목록]
     H --> J
-    J --> K[조회 응답]
+    I --> J
+    J --> K{기간 내 유효 일별 가격}
+    K -->|1일 이상| L[유효 일별 가격의 단순 산술평균]
+    K -->|0일| M[기간 가격 미산출]
+    L --> N[PeriodPrice 저장 및 v2 지표 기록]
+    N --> O[조회 응답]
 ```
 
 ### 5.2 Logical ERD
