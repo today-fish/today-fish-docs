@@ -102,6 +102,7 @@
 - [BE-ADR-005-데이터베이스-및-AWS-인프라.md](./MVP/architecture/backend/BE-ADR-005-데이터베이스-및-AWS-인프라.md)
 - [BE-ADR-006-스키마-변경-및-백업.md](./MVP/architecture/backend/BE-ADR-006-스키마-변경-및-백업.md)
 - [BE-ADR-007-가격수집-PDF-AI-파이프라인.md](./MVP/architecture/backend/BE-ADR-007-가격수집-PDF-AI-파이프라인.md)
+- [BE-ADR-008-AI-실행-아키텍처.md](./MVP/architecture/backend/BE-ADR-008-AI-실행-아키텍처.md)
 
 ### `design-system/`
 
