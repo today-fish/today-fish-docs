@@ -104,6 +104,11 @@
 - [BE-ADR-007-가격수집-PDF-AI-파이프라인.md](./MVP/architecture/backend/BE-ADR-007-가격수집-PDF-AI-파이프라인.md)
 - [BE-ADR-008-AI-실행-아키텍처.md](./MVP/architecture/backend/BE-ADR-008-AI-실행-아키텍처.md)
 
+`tech-spec/`는 승인된 데이터 수집·정규화와 가격 모델링·산출 기준을 정의한다.
+
+- [BE-TECH-SPEC-001-데이터-수집-정규화-검증.md](./MVP/architecture/backend/tech-spec/BE-TECH-SPEC-001-데이터-수집-정규화-검증.md)
+- [BE-TECH-SPEC-002-가격-데이터-모델링-및-산지-도매가격-산출.md](./MVP/architecture/backend/tech-spec/BE-TECH-SPEC-002-가격-데이터-모델링-및-산지-도매가격-산출.md)
+
 ### `design-system/`
 
 디자인 시스템 기준, Figma 설계 절차와 디자인 검증 문서를 관리한다. 승인된 토큰과 미리보기 자료는 함께 확인할 수 있다.
