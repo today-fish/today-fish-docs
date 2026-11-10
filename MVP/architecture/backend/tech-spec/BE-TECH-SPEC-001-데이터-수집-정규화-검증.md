@@ -1,286 +1,216 @@
-# BE-TECH-SPEC-001 — 데이터 수집·정규화·검증
+# BE-TECH-SPEC-001 데이터 수집 정규화 검증
 
-- **상태:** Accepted
-- **버전:** v0.4
-- **승인일:** 2026-11-06
-- **관련 문서:** [BE-TECH-SPEC-002 v0.5](BE-TECH-SPEC-002-가격-데이터-모델링-및-산지-도매가격-산출.md), BE-ADR-007, BE-ADR-008, POC-003. 논리 ERD는 본 문서 §6.1과 BE-TECH-SPEC-002 §5.2를 함께 기준으로 한다.
+- **버전:** V1
+- **상태:** 승인
+- **기준일:** 2026-11-09
+- **기존 정책 기준:** 사용자 제공 BE-TECH-SPEC-001 v0.4 Accepted
+- **관련 문서:** [002 V1](BE-TECH-SPEC-002-가격-데이터-모델링-및-산지-도매가격-산출.md), [003 V1](BE-TECH-SPEC-003-PDF-기사-수집-및-정보-추출.md), [통합 ERD V1](../erd/BE-ERD-001-통합-데이터-모델.md)
 
-## Summary
+## 1 목적과 책임
 
-공공 API, 발간행물, 기사 스크랩을 공통 수집 작업으로 관리하고, 확보한 원본에서 가격·거래 관측값을 추출·정규화·검증한다. 원본과 공통 관측 모델을 보존하며, 검증된 관측값의 산지·도매 가격 집계는 [BE-TECH-SPEC-002](BE-TECH-SPEC-002-가격-데이터-모델링-및-산지-도매가격-산출.md)가 담당한다.
+공공 API·PDF·기사의 수집을 하나의 Batch 아래 독립적인 Job과 Request로 관리한다. 원본을 보존하고 가격·거래 관측값을 정규화·검증해 후속 가격 집계와 설명 생성의 입력으로 제공한다. 수집 성공, 관측 유효성, 가격 집계 적격성을 각각 구분한다.
 
-## 1. Scope and Responsibilities
+| 문서 | 책임                                                                    |
+| ---- | ----------------------------------------------------------------------- |
+| 001  | 공통 Batch·Job·Request·Source, 어종 매핑, API 수집·매핑, 공통 관측·검증 |
+| 002  | 가격 비교 가능성, 기준 원천, 일별·반월·월 가격, 집계 입력 재현          |
+| 003  | PDF·기사 원본 보존·분석·Evidence, PriceInsight 변경 판단·생성·게시 계약 |
+| ERD  | 16개 테이블의 컬럼·관계·키·NULL·불변성·스냅샷 보존 기준                 |
 
-- `PUBLIC_API`, `PUBLICATION`, `NEWS` 수집 유형을 지원한다.
-- 수집 작업·요청·원본 관리는 `collection_job`, `collection_request`, `collected_source`를 공유한다.
-- 원천별 수집·파싱·추출 구현은 분리하고, 결과는 공통 관측 모델로 정규화한다.
-- 공공 API 수집은 `PublicDataCollector`와 제공기관별 구현체를 사용한다.
-- 문서·기사의 AI 추출은 구조화 후보를 생성하며, 검증된 사실 또는 가격 집계 입력으로 자동 간주하지 않는다.
+테이블 전체 정의는 ERD를 기준으로 한다. 001의 관측·검증 계약은 API와 문서 경로에 공통 적용하고, 원천별 추출 구현은 분리한다. 단일 Spring Boot 배포와 PostgreSQL 상태 관리, 제한된 백그라운드 실행을 기본으로 하며 외부 호출 중 DB 트랜잭션을 유지하지 않는다.
 
-## 2. Components
+## 2 배치와 실행 단위
 
-| 컴포넌트                      | 책임                                     |
-| ----------------------------- | ---------------------------------------- |
-| `CollectionScheduler`         | 정기 수집 작업 시작                      |
-| `CollectionOrchestrator`      | 비동기 작업 실행·상태·재시도 관리        |
-| `CollectionProcessor`         | 원본 보존, 정규화 결과 및 검증 결과 저장 |
-| `PublicDataCollector`         | 공공 API 수집 계약                       |
-| `AtCollector`, `KmiCollector` | aT·KMI API 호출                          |
-| `PublicDataMapper`            | API 응답을 공통 모델로 변환하는 계약     |
-| `AtMapper`, `KmiMapper`       | 제공기관별 응답 매핑                     |
-| `PublicDataValidator`         | 정규화 관측값 검증 계약                  |
-| `SpeciesMappingService`       | 외부 품목 코드와 내부 어종 연결          |
+매일 06:00 `Asia/Seoul`에 통합 배치를 시작한다. 배치는 공공 API·발간물·기사 Job을 수집 유형·기관·데이터셋별로 생성한다. 각 Job은 날짜·품목·페이지·문서 등 독립 처리 범위를 가진 Request를 등록한다. 원천 하나의 실패가 다른 Job의 성공을 취소하지 않는다.
 
-### 2.1 Implementation Contracts
+| 모델               | 의미                    | 중복 방지                                  |
+| ------------------ | ----------------------- | ------------------------------------------ |
+| COLLECTION_BATCH   | 통합 실행 회차          | 스케줄·예정 회차·실행 목적의 execution_key |
+| COLLECTION_JOB     | 한 원천/데이터셋의 실행 | batch_id와 작업 정의의 execution_key       |
+| COLLECTION_REQUEST | 독립 재시도 단위        | job_id와 실제 요청 조건의 request_key      |
+| COLLECTED_SOURCE   | 확보한 원본 버전        | UNIQUE(source_key, content_hash)           |
 
-아래 코드는 책임과 의존 관계를 나타내는 Java 논리 모델이다. 인터페이스는 원천별 구현을 교체할 경계이며, DTO·record는 처리 단계 사이의 데이터 계약이다. 영속 데이터 모델은 JPA Entity 또는 동등한 저장 모델로 구현하고 외부 API 응답 DTO와 분리한다.
+같은 Request의 재시도는 기존 ID와 attempt_count를 사용한다. Request를 호출 시도마다 새로 만들지 않는다. retry_policy_key는 버전이 고정된 정책 설정을 참조하며 실제 호출 시도 번호는 운영 로그로 연결한다. 날짜·페이지·검색 조건이 달라지면 다른 Request다.
+
+목록/페이지 탐색도 Request로 기록한다. 발견한 후속 Request 등록과 탐색 Request의 성공 처리를 같은 트랜잭션에 묶는다. 조회 페이지·수집 건수·배치 실행 시간에 상한을 두며 제한 없이 탐색하지 않는다. 입력 조건과 정책 키는 작업 시작 후 임의로 변경하지 않는다.
+
+```mermaid
+flowchart TD
+    S[06시 Scheduler] --> B[CollectionBatch]
+    B --> J[유형 기관 데이터셋별 Job]
+    J --> R[품목 기간 페이지 문서별 Request]
+    R --> C{수집 유형}
+    C -->|PUBLIC_API| A[aT 또는 KMI 수집 및 매핑]
+    C -->|PUBLICATION NEWS| D[003의 문서 및 기사 처리]
+    A --> O[Source 원본 보존]
+    D --> O
+    O --> N[관측 후보와 Evidence]
+    N --> V[공통 검증 및 이슈 저장]
+    V --> P[002 가격 적격성 및 집계]
+    V --> I[003의 관련 이슈와 Insight 입력]
+    P --> I
+    I --> F[변경된 어종과 기간만 재생성]
+```
+
+## 3 구성 요소와 구현 계약
+
+| 컴포넌트                    | 책임                                        |
+| --------------------------- | ------------------------------------------- |
+| CollectionScheduler         | 배치 시작, 중복 회차 확인, 복구 실행 트리거 |
+| CollectionOrchestrator      | 원천별 실행 선택, 상태·기한·재시도 조정     |
+| CollectionProcessor         | 원본·관측·근거·검증 결과의 원자 저장        |
+| PublicDataCollector         | 제공기관별 API 호출 계약                    |
+| AtCollector / KmiCollector  | aT·KMI 호출·페이지·오류 해석                |
+| PublicDataMapper            | 외부 응답을 공통 관측 후보로 변환           |
+| PublicDataValidator         | 어종·값·기간·단위·근거·중복 검사            |
+| SpeciesMappingService       | 외부 품목 코드와 내부 어종 연결             |
+| ObservationIdentityResolver | 처리 중복과 독립 관측 사건 구분             |
+
+다음 코드는 구현 경계를 설명하는 Java 논리 계약이다. 외부 API DTO, 처리 명령, 영속 Entity를 구분한다. 완성된 애플리케이션 구현이나 컴파일 검증 결과는 아니다.
 
 ```java
-// API 원천별 호출 계약. aT와 KMI는 각각 별도 구현체를 제공한다.
 public interface PublicDataCollector {
     boolean supports(Dataset dataset);
-    CollectionResult collect(CollectionRequest request);
+    CollectionResult collect(CollectionRequestCommand request);
 }
 
-// 원천 응답 DTO를 공통 관측 후보로 변환하는 계약.
 public interface PublicDataMapper {
     boolean supports(Dataset dataset);
     MappingResult map(RawApiResponse response, Dataset dataset);
 }
 
-// 정규화된 관측 후보의 기본 유효성을 판정한다.
 public interface PublicDataValidator {
-    ValidationResult validate(NormalizedObservation observation);
+    ValidationResult validate(NormalizedObservationCandidate candidate);
 }
 
-// 불변 값 객체: 외부 코드는 내부 어종 ID와 구분한다.
-public record CollectionRequest(
-    UUID jobId,
-    Dataset dataset,
-    Long speciesId,
-    LocalDate startDate,
-    LocalDate endDate
+public record CollectionRequestCommand(
+    UUID requestId, UUID jobId, Dataset dataset, Long speciesId,
+    LocalDate startDate, LocalDate endDate, Map<String, Object> parameters
 ) {}
-
-// 공통 도메인 모델. 실제 영속화 시 테이블 관계에 맞춘 Entity로 매핑한다.
-public class NormalizedObservation {
-    UUID id;
-    UUID sourceId;
-    Long speciesId;
-    ObservationType observationType;
-    ExtractionMethod extractionMethod;
-    LocalDate periodStart;
-    LocalDate periodEnd;
-    String sourceLocator;
-}
-
-public class PriceObservation {
-    UUID observationId; // NormalizedObservation의 1:1 상세
-    PriceType priceType;
-    BigDecimal price;
-    String currency;
-    String unit;
-    String priceStatistic;
-    Map<String, Object> productConditions;
-}
 ```
 
-`CollectionOrchestrator`는 적절한 Collector를 선택하고, `CollectionProcessor`는 원본 저장·매핑·검증·영속화를 조정한다. `AtCollector`·`KmiCollector`, `AtMapper`·`KmiMapper`는 해당 인터페이스의 원천별 구현이다.
+외부 API 응답 형식 변경과 오류 해석은 해당 Collector/Mapper가 담당한다. 공급자 응답 DTO를 Entity로 직접 저장하지 않으며, 모델 호출 없이 API를 결정적으로 매핑한다.
 
-### 2.2 Collection Pipeline
+## 4 제공기관과 어종 매핑
 
-```mermaid
-flowchart LR
-    S[CollectionScheduler] --> O[CollectionOrchestrator]
-    O --> J[CollectionJob / CollectionRequest]
-    J --> C{수집 유형}
-    C -->|PUBLIC_API| A[AtCollector / KmiCollector]
-    C -->|PUBLICATION| P[발간물 수집기·파서]
-    C -->|NEWS| N[기사 수집기·분석기]
-    A --> R[CollectedSource 원본 보존]
-    P --> R
-    N --> R
-    R --> M[Mapper / Extractor]
-    M --> V[Validator]
-    V -->|VALID·REVIEW_REQUIRED·INVALID| D[NormalizedObservation 및 상세 모델 저장]
-    D --> Q[ObservationValidation 저장]
-    Q --> X[BE-TECH-SPEC-002 집계 적합성 판정]
-```
+공공 API 대상은 aT 정산정보와 KMI 유통정보다. KAMIS는 MVP 수집 대상에서 제외한다. 아래 API 식별·필드는 기존 승인본의 참조 정보이며, 실제 배포 시 접근 권한과 현재 응답 계약을 확인한다.
 
-## 3. Providers and Species Mapping
+| 구분   | aT 정산정보               | KMI 유통정보            |
+| ------ | ------------------------- | ----------------------- |
+| API    | `/B552845/katSale/trades` | `/API/openAPI.do`       |
+| 품목   | 대·중·소분류 코드         | kdfshCode               |
+| 날짜   | trd_clcln_ymd             | creatDate               |
+| 가격   | avgprc, lwprc, hgprc 등   | pc, yr 등               |
+| 거래량 | unit_tot_qty              | 기존 확인 응답에는 없음 |
 
-공공 API 대상은 aT 정산정보와 KMI 유통정보다. KAMIS는 수집 대상에서 제외한다.
+| 내부 코드 | 어종      | aT 대/중분류 | KMI 코드 |
+| --------- | --------- | ------------ | -------- |
+| FLATFISH  | 광어 넙치 | 미확인       | KDFSH08  |
+| ROCKFISH  | 우럭      | 미확인       | KDFSH09  |
+| HAIRTAIL  | 갈치      | 71/04        | KDFSH02  |
+| MACKEREL  | 고등어    | 71/06        | KDFSH01  |
+| ABALONE   | 전복      | 62/09, 72/09 | 미확인   |
+| SHRIMP    | 새우      | 미확인       | 미확인   |
 
-| 구분      | aT 정산정보                   | KMI 유통정보         |
-| --------- | ----------------------------- | -------------------- |
-| API       | `/B552845/katSale/trades`     | `/API/openAPI.do`    |
-| 품목 식별 | 대·중·소분류 코드             | `kdfshCode`          |
-| 날짜      | `trd_clcln_ymd`               | `creatDate`          |
-| 가격      | `avgprc`, `lwprc`, `hgprc` 등 | `pc`, `yr` 등        |
-| 거래량    | `unit_tot_qty`                | 확인된 응답에는 없음 |
+내부 species.id/code와 외부 품목 코드는 같은 식별자로 사용하지 않는다. SPECIES_EXTERNAL_CODE의 provider·dataset·external_code·mapping_level·active를 조회한다. 미확인 코드를 추정해 채우지 않으며, 이 목록이 모든 품목의 실제 가격 제공 가능성을 보장하지 않는다.
 
-내부 어종은 `species.id`, `species.code`로 식별하고 외부 코드는 `species_external_code`에서 관리한다. 외부 품목 코드와 서비스 내부 어종 ID를 같은 식별자로 사용하지 않는다.
+EXACT는 정확 대응, GROUP은 상품군 대응이다. GROUP 매핑만으로 가격 비교 가능성을 인정하지 않는다. 활성 EXACT 매핑이 서로 다른 어종으로 모호하게 연결되지 않도록 보호한다. 미매핑 관측을 보존할 경우 species_id=NULL과 검토 상태를 사용하고 자동 집계에서 제외한다.
 
-| 내부 코드  | 어종       | aT 대/중분류     | KMI 코드  |
-| ---------- | ---------- | ---------------- | --------- |
-| `FLATFISH` | 광어(넙치) | —                | `KDFSH08` |
-| `ROCKFISH` | 우럭       | —                | `KDFSH09` |
-| `HAIRTAIL` | 갈치       | `71/04`          | `KDFSH02` |
-| `MACKEREL` | 고등어     | `71/06`          | `KDFSH01` |
-| `ABALONE`  | 전복       | `62/09`, `72/09` | —         |
-| `SHRIMP`   | 새우       | —                | —         |
+## 5 원본 보존과 API 처리
 
-빈 코드는 등록 전 확인이 필요한 값이다. 매핑 수준은 `EXACT`, `GROUP`으로 구분한다. `GROUP`은 상품군 대응이며 가격 비교 가능성까지 의미하지 않는다. 매핑 실패는 원본을 보존하고 사유를 기록한다.
+1. 실행 범위·요청 파라미터·retry_policy_key를 고정하고 Request를 점유한다.
+2. Collector가 API를 호출하고 응답 상태·페이지·정상 0건 여부를 해석한다.
+3. 허용된 저장소에 원본 응답을 보존하고 Source의 content_ref·content_hash·실제 요청 조건을 기록한다.
+4. Mapper가 원본 행 키/JSON 경로/페이지 내 위치를 가진 관측 후보를 만든다.
+5. 가격·거래 상세와 수치를 지지하는 API Evidence를 구성한다.
+6. Validator가 공통 규칙을 검사한 뒤 관측·상세·근거·연결·이슈를 함께 저장한다.
 
-## 4. Collection and Normalization Flow
+content_hash는 원본 바이트 또는 규약으로 고정한 원본 표현의 SHA-256이다. source_key에는 기관·데이터셋·품목·날짜·페이지 등 실제 요청 범위를 포함한다. 서로 다른 요청의 빈 응답 해시가 같다는 이유로 출처를 하나로 합치지 않는다. URL만 같고 내용이 달라지면 새 Source 버전이다.
 
-1. Orchestrator가 수집 유형·제공기관·데이터셋별 작업을 생성한다.
-2. Collector 또는 Scraper가 API 응답, 발간물 또는 기사를 확보한다.
-3. Processor가 요청 조건, 원본 위치·해시 및 수집 시각을 보존한다.
-4. 원천별 Mapper 또는 Extractor가 공통 관측 후보를 생성한다.
-5. Validator가 어종, 값, 단위, 기간, 출처, 중복 및 추출 근거를 검사한다.
-6. Processor가 정규화 관측값과 검증 결과를 저장한다.
+Source.metadata는 유형별 JSONB 계약을 사용한다. API에는 schema_version, 실제 요청 조건, 응답 형식, 페이지 정보, 해시 규약 버전과 제공기관 원천 식별 정보를 보존한다. 제공기관 응답에 실제 데이터 기준시각이 포함되면 이 metadata에 보존한다. 정기 작업의 dataset은 Job이 소유하고, 실제 호출 조건은 원본 재현에 필요한 스냅샷으로 metadata에 기록할 수 있다. 권한·본문·파일 규약은 003과 같은 Source 저장 경계를 사용한다.
 
-| 모델                    | 책임                                       |
-| ----------------------- | ------------------------------------------ |
-| `CollectionJob`         | 수집 유형·제공기관·데이터셋 및 작업 상태   |
-| `CollectionRequest`     | 요청 조건·상태·시도 횟수                   |
-| `CollectedSource`       | API 응답·발간물·기사의 원본과 출처         |
-| `NormalizedObservation` | 어종, 관측 유형·기간, 추출 방법, 출처 위치 |
-| `PriceObservation`      | 가격·가격 유형·단위·통계·상품 조건         |
-| `TradeObservation`      | 거래량·단위·거래금액·시장·거래 방식        |
-| `ObservationValidation` | 원본 또는 관측값의 검증 상태·사유          |
+정상 0건은 Request.NO_DATA로 기록하고, 확보한 빈 원본 응답도 재현 가능하게 보존한다. 0건을 가격 0원이나 기존 관측 삭제로 변환하지 않는다. 원본은 수집됐으나 유효 관측이 없는 경우 수집 성공과 관측 검토/무효 상태를 구분한다.
 
-`observation_type`은 관측 내용(`PRICE`, `TRADE` 등)을, `extraction_method`는 추출 방식(`API_MAPPING`, `PARSER`, `AI_EXTRACTION` 등)을 나타낸다. 관측 기준 기간은 발행일·게시일과 구분한다. 근거 수치를 확인할 수 없으면 상세 관측값을 만들지 않고 원문과 분석 근거를 보존한다.
+## 6 정규화 관측과 근거
 
-## 5. Validation Policy
+NORMALIZED_OBSERVATION은 원본·어종·유형·기간·추출 방식·위치·정규화 버전·독립성·검증 상태를 보존한다. PRICE_OBSERVATION은 원천 가격·통화·단위·통계·상품 조건과 검증된 KRW/kg 가격·환산 근거를 보존한다. TRADE_OBSERVATION은 거래량·단위·총액·시장·거래 유형을 보존한다.
 
-검증 상태는 `VALID`, `REVIEW_REQUIRED`, `INVALID`로 구분한다. 수집 성공과 관측값의 유효성은 별도로 기록한다.
+observation_type은 PRICE/TRADE 등 관측 내용을, extraction_method는 API_MAPPING/PARSER/AI_EXTRACTION을 구분한다. 관측 기간과 게시·수집 시각을 혼용하지 않는다. 승인 모델에 없는 수급 지표를 거래량으로 바꾸지 않으며, 해당 주장은 003의 Evidence와 원본 응답에 보존한다.
 
-- KMI `pc=0`은 원본을 보존하되 유효한 0원 가격으로 자동 처리하지 않는다.
-- 동일 날짜 복수값은 독립 관측 여부 확인 전 평균하거나 제거하지 않는다.
-- aT 가격은 거래 단위와 상품 조건을 확인한다.
-- 문서·기사 가격은 원문 위치, 관측 기준 기간 및 인용 출처를 확인한다.
-- 타 기관의 수치를 재인용한 자료는 독립적인 새 가격 관측으로 중복 집계하지 않는다.
-- 정상적인 0건 응답은 수집 성공으로 기록하고, 관측값이 없음을 별도로 나타낸다.
-- 재수집 또는 검증 실패로 기존 정상 관측값을 덮어쓰지 않는다.
+API 관측의 analysis_run_id와 API Evidence의 analysis_run_id는 NULL이다. Evidence.source_locator에는 원본 행 키·JSON 경로·단위 필드 등 수치를 확인할 위치를 남긴다. quote는 해당 원천 값을 확인할 수 있는 응답 발췌다. 검증된 관측에는 하나 이상의 SUPPORTS_VALUE 연결이 있어야 한다. 변동 설명과 일반 맥락은 EXPLAINS_CHANGE/CONTEXT로 구분한다.
 
-가격 관측값이 `VALID`여도 가격 집계 적합성을 자동으로 의미하지 않는다. BE-TECH-SPEC-002는 가격 비교 가능성과 집계 입력 조건을 별도로 판정한다.
+### 6.1 저장 중복과 독립 표본
 
-## 6. Execution and Storage
+dedupe_fingerprint는 원본 행·처리 설정·어종·유형·상세 값·normalization_version을 포함해 동일 처리 결과가 반복 저장되는 것을 막는다. 독립 관측 사건을 식별하는 independence_key는 별개다. 원출처·원천 사건/행·관측일·시장·상품 조건·지표를 사용하며 가격값만으로 만들지 않는다.
 
-작업 상태와 요청 상태는 PostgreSQL에 저장하고, 관측 검증 상태와 분리한다.
+같은 날짜·가격의 서로 다른 거래는 독립 표본일 수 있다. 같은 KMI 수치를 여러 문서가 재인용하면 하나의 사건의 여러 근거일 수 있다. DIRECT/VERIFIED_CITATION도 독립성 검증을 생략하지 않는다. UNKNOWN 또는 사건 식별이 불명확하면 자동 집계에서 제외한다.
 
-```text
-PENDING → RUNNING → SUCCEEDED
-                  ↘ PARTIAL_SUCCESS
-                  ↘ FAILED → RETRY_PENDING
-```
+### 6.2 정정과 버전
 
-제공기관별 호출 수·타임아웃·재시도를 제한하고 요청 단위로 재처리할 수 있게 한다. 서버 재시작 시 영속 상태를 확인해 미완료 작업을 복구한다. API 호출 중 장시간 데이터베이스 트랜잭션을 유지하지 않는다.
+관측 수치·원문 위치·단위·상품 조건·환산 근거는 버전별 불변이다. 정정·재추출·재정규화는 새 observation_id와 fingerprint를 만든다. 같은 사건의 여러 버전 중 현재 사용 가능한 버전 선택은 검증 근거에 따라 명시적으로 결정한다. 새 후보가 실패했다고 기존 정상 버전을 자동으로 무효화하지 않는다.
 
-| 테이블                   | 책임                       |
-| ------------------------ | -------------------------- |
-| `species`                | 내부 어종                  |
-| `species_external_code`  | 외부 품목 코드 매핑        |
-| `collection_job`         | 수집 작업 상태             |
-| `collection_request`     | 개별 요청·조건·재시도      |
-| `collected_source`       | 원본·출처·해시             |
-| `normalized_observation` | 공통 관측값·기간·추출 방식 |
-| `price_observation`      | 가격 관측 상세             |
-| `trade_observation`      | 거래 관측 상세             |
-| `observation_validation` | 원본·관측 검증 결과        |
+정정이 확인되어 구버전을 대체하는 경우 구버전의 현재 검증 상태와 VALIDATION_ISSUE에 대체 사유를 기록한다. 대체된 구버전을 다시 최신 적격 값으로 선택하지 않는다. 과거 PERIOD_PRICE_INPUT과 스냅샷의 수치·입력은 수정하지 않는다.
 
-원본 전체 또는 외부 저장 위치를 보존해 규칙 변경 후 재처리할 수 있게 한다. 상세 가격 집계 정책과 `period_price` 결과 저장은 BE-TECH-SPEC-002에서 정의한다.
+## 7 검증 정책
 
-### 6.1 Logical ERD
+관측은 VALID, REVIEW_REQUIRED, INVALID로 분류한다. Evidence는 UNREVIEWED, PASS, REVIEW, REJECTED다. 구조 파싱 성공은 관측 VALID나 Evidence PASS를 뜻하지 않는다.
 
-```mermaid
-erDiagram
-    COLLECTION_JOB ||--o{ COLLECTION_REQUEST : schedules
-    COLLECTION_REQUEST ||--o{ COLLECTED_SOURCE : obtains
-    COLLECTED_SOURCE ||--o{ NORMALIZED_OBSERVATION : produces
-    COLLECTED_SOURCE ||--o{ OBSERVATION_VALIDATION : source_check
-    SPECIES ||--o{ SPECIES_EXTERNAL_CODE : maps
-    SPECIES ||--o{ NORMALIZED_OBSERVATION : identifies
-    NORMALIZED_OBSERVATION ||--o| PRICE_OBSERVATION : price_detail
-    NORMALIZED_OBSERVATION ||--o| TRADE_OBSERVATION : trade_detail
-    NORMALIZED_OBSERVATION ||--o{ OBSERVATION_VALIDATION : observation_check
+| 검증 항목           | 처리                                               |
+| ------------------- | -------------------------------------------------- |
+| KMI pc=0            | 원본 보존, 유효 0원 가격으로 자동 처리 금지        |
+| 같은 날짜의 복수 값 | 통계 의미와 독립성을 확인하기 전 평균·제거 금지    |
+| aT 가격·단위        | 거래 단위·규격·등급·시장·상품 조건 확인            |
+| 기간·단위 미확인    | 값 유지 또는 후보 보존, 검토 상태와 자동 집계 제외 |
+| 문서·기사 재인용    | 같은 사건을 독립 표본으로 중복 사용하지 않음       |
+| 신규 검증 실패      | 기존 정상 관측·가격·게시본 덮어쓰기 금지           |
 
-    COLLECTION_JOB {
-        uuid id PK
-        string collection_type
-        string provider
-        string dataset
-        string status
-        datetime started_at
-        datetime finished_at
-    }
-    COLLECTION_REQUEST {
-        uuid id PK
-        uuid job_id FK
-        json request_params
-        string status
-        int attempt_count
-        datetime requested_at
-        datetime completed_at
-    }
-    COLLECTED_SOURCE {
-        uuid id PK
-        uuid request_id FK
-        string source_type
-        string source_url
-        string content_ref
-        string content_hash
-        datetime collected_at
-    }
-    SPECIES {
-        bigint id PK
-        string code UK
-        string korean_name
-    }
-    SPECIES_EXTERNAL_CODE {
-        bigint id PK
-        bigint species_id FK
-        string provider
-        string dataset
-        string external_code
-        string mapping_level
-        boolean active
-    }
-    NORMALIZED_OBSERVATION {
-        uuid id PK
-        uuid source_id FK
-        bigint species_id FK
-        string observation_type
-        string extraction_method
-        date period_start
-        date period_end
-        string source_locator
-    }
-    PRICE_OBSERVATION {
-        uuid observation_id PK,FK
-        string price_type
-        decimal price
-        string currency
-        string unit
-        string price_statistic
-        json product_conditions
-    }
-    TRADE_OBSERVATION {
-        uuid observation_id PK,FK
-        decimal quantity
-        string quantity_unit
-        decimal total_amount
-        string market_code
-        string trade_type
-    }
-    OBSERVATION_VALIDATION {
-        uuid id PK
-        uuid source_id FK
-        uuid observation_id FK
-        string status
-        string reason_code
-        datetime validated_at
-    }
-```
+현재 검증 상태와 구체적인 문제 이력은 분리한다. 기존 ObservationValidation의 역할은 각 관측/Evidence의 상태와 VALIDATION_ISSUE로 대체하며 별도 테이블을 만들지 않는다. 이슈의 source/analysis/observation/evidence FK 중 정확히 하나만 지정하고 details에 실패 위치·실제값·기대 조건을 남긴다.
+
+VALID는 기본 유효성 판정이다. 집계할 가격 단계·기준 원천·상품 조건·독립 사건·표준 단위 적격성은 002가 추가로 판단한다.
+
+## 8 상태와 트랜잭션
+
+| 대상                 | 정상 경로                                 | 실패 또는 기타 상태                                           |
+| -------------------- | ----------------------------------------- | ------------------------------------------------------------- |
+| Batch / Job          | PENDING → RUNNING → SUCCEEDED             | PARTIAL_SUCCESS, FAILED                                       |
+| Request              | PENDING → RUNNING → SUCCEEDED / NO_DATA   | RETRY_PENDING → RUNNING, EXCLUDED_BY_POLICY, FAILED_PERMANENT |
+| AnalysisRun          | PENDING → RUNNING → SUCCEEDED             | RETRY_PENDING → RUNNING, REVIEW, FAILED_PERMANENT             |
+| PriceInsightSnapshot | PENDING → RUNNING → GENERATED → PUBLISHED | RUNNING → PENDING 예약 재시도, 소진 시 FAILED                 |
+
+Batch/Job은 해당 실행 창의 요약이다. 실행 기한 내 끝나지 않은 재시도 항목은 RETRY_PENDING으로 보존하고 성공 결과가 있으면 PARTIAL_SUCCESS, 없으면 FAILED로 닫는다. 정상 0건만 있는 작업은 실패가 아니다. 복구는 원래 Request/Analysis ID로 수행하고 다음 배치의 적격 입력 재비교에 포함한다. Request 성공 뒤 문서 분석이 실패해도 원본 수집 성공을 취소하지 않는다.
+
+| 트랜잭션   | 함께 반영할 작업                                  |
+| ---------- | ------------------------------------------------- |
+| 실행 준비  | Batch 고유키 확보·Job·초기 Request 생성           |
+| 작업 점유  | 대기 행 잠금·상태 변경·lease_token·lease_until    |
+| 원본 확보  | Source UPSERT·Request 결과·필요한 후속 분석 등록  |
+| API 정규화 | 관측·가격/거래·API Evidence·연결·이슈의 원자 저장 |
+| 실패 기록  | 현재 토큰 확인·오류·재시도 시각 또는 최종 상태    |
+
+API는 점유 후 원본 확보·매핑·검증을 수행하고, 원본 수집 완료와 정규화 결과를 같은 완료 트랜잭션에 반영할 수 있다. 큰 응답은 Request 범위를 페이지 단위로 제한한다. 분석이 별도인 문서는 003의 트랜잭션 경계를 사용한다.
+
+외부 HTTP·파일 저장·모델 호출·backoff는 트랜잭션 밖이다. 작업 회수 시 토큰을 새로 발급하고 오래된 토큰의 응답을 반영하지 않는다. 완료 시 행을 잠그고 RUNNING·현재 토큰·유효 점유를 확인한다. 고유키만으로 외부 호출의 정확히 한 번 실행을 보장한다고 가정하지 않는다.
+
+제공기관별 timeout·최대 시도·페이지·수집량·실행 기한을 버전 설정으로 고정한다. 영구 입력/권한 오류는 자동 재시도하지 않고 일시 오류는 제한된 backoff를 적용한다. 호출 제한·기본 실행안은 003과 공통 실행기를 통해 관리한다. 필수 설정 누락은 작업 시작 전에 탐지한다.
+
+## 9 후속 처리와 운영
+
+저장 후 영향받는 어종·관측일을 002와 003에 제공한다. 이 통지는 최적화 힌트이며, 통지 유실 시 영속 Source·관측·근거·최신 게시본을 재비교해 복구한다. 같은 날짜 재수집이나 배치 시각 변경만으로 새 PriceInsight를 게시하지 않는다.
+
+로그에는 Batch/Job/Request/Analysis ID, 시도, 원본 해시, 오류·소요 시간을 연결한다. 원문·자격 증명은 일반 로그에 남기지 않는다. 원본·관측·근거·가격 입력·게시 스냅샷 삭제는 재현성과 FK 보존을 고려한 별도 정책을 따른다. 토큰 사용량 컬럼은 만들지 않는다.
+
+## 10 구현 인수 기준
+
+아래는 구현 시 확인할 기준이며 문서 작성 중 실행한 테스트 결과가 아니다.
+
+- 배치·작업·요청 재기동 시 중복 생성 없이 같은 논리 작업을 회수한다.
+- 정상 0건과 통신 실패를 구분하고 기존 정상 가격을 보호한다.
+- 미매핑·단위 불명·pc=0·독립성 미확인 관측을 자동 집계하지 않는다.
+- API 원본 행과 관측·Evidence를 역추적할 수 있다.
+- 같은 사건의 재인용은 중복 표본이 되지 않고 다른 독립 거래는 유지된다.
+- 만료된 작업자의 늦은 응답이 새 작업의 결과를 덮어쓰지 않는다.
+- 승인 ERD의 컬럼·상태·NULL 규칙과 002/003의 공통 계약이 일치한다.
+
+## 11 V1 변경 이력
+
+기존 001 v0.4의 원천·매핑·검증 정책을 유지하고 Batch→Job→Request, 원본 metadata, 관측 위치·정규화 버전·독립성, Evidence 연결, 이슈 이력, 멱등성과 lease를 승인 ERD에 맞춰 통합했다. 전체 테이블 정의는 통합 ERD V1에서 관리한다.

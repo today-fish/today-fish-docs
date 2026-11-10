@@ -23,6 +23,11 @@
 |---|---|---|
 | [BE-TECH-SPEC-001](tech-spec/BE-TECH-SPEC-001-데이터-수집-정규화-검증.md) | 데이터 수집·정규화·검증 | aT·KMI API 및 별도 발간물·기사 수집 경로 |
 | [BE-TECH-SPEC-002](tech-spec/BE-TECH-SPEC-002-가격-데이터-모델링-및-산지-도매가격-산출.md) | 가격 데이터 모델링·산출 | 산지·도매 가격의 독립 집계와 기간 가격 |
+| [BE-TECH-SPEC-003](tech-spec/BE-TECH-SPEC-003-PDF-기사-수집-및-정보-추출.md) | PDF·기사 수집 및 정보 추출 | 원본 보존·분석·Evidence와 PriceInsight 계약 |
+
+## 통합 데이터 모델
+
+- [BE-ERD-001](erd/BE-ERD-001-통합-데이터-모델.md) — 16개 테이블의 컬럼·관계·키·NULL·불변성 기준
 
 ## ADR 문서 구조
 

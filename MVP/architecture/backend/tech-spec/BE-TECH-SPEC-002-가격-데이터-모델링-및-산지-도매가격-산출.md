@@ -1,270 +1,182 @@
-# BE-TECH-SPEC-002-가격-데이터-모델링-및-산지-도매가격-산출
+# BE-TECH-SPEC-002 가격 데이터 모델링 및 산지 도매가격 산출
 
-- **상태:** Accepted
-- **버전:** v0.5
-- **승인일:** 2026-11-06
-- **관련 문서:** [BE-TECH-SPEC-001 v0.4](BE-TECH-SPEC-001-데이터-수집-정규화-검증.md), 논리 ERD는 BE-TECH-SPEC-001 §6.1과 본 문서 §5.2를 함께 기준으로 한다.
+- **버전:** V1
+- **상태:** 승인
+- **기준일:** 2026-11-09
+- **기존 정책 기준:** 사용자 제공 BE-TECH-SPEC-002 v0.5 Accepted
+- **집계 정책:** price-aggregation-v2 유지
+- **관련 문서:** [001 V1](BE-TECH-SPEC-001-데이터-수집-정규화-검증.md), [003 V1](BE-TECH-SPEC-003-PDF-기사-수집-및-정보-추출.md), [통합 ERD V1](../erd/BE-ERD-001-통합-데이터-모델.md)
 
-## Summary
+## 1 목적과 책임
 
-검증된 독립 일별 가격 관측값을 어종·가격 유형·기준 원천별로 집계해 반월·월 산지 및 도매 대표가격을 산출한다. 가격 관측값과 원본은 BE-TECH-SPEC-001의 공통 모델을 사용하고, 계산 결과는 `period_price`에 저장한다.
+검증된 독립 가격 관측값에서 날짜별 대표가격을 구하고, 유효 일별 가격을 단순평균해 반월·월 산지 및 도매가격을 산출한다. 원본과 공통 관측은 001/003에서 생성하며 본 문서는 집계 적격성·비교 조건·기준 원천·가격 산출·버전·입력 재현을 담당한다.
 
-## 1. Scope and Responsibilities
+산지(PRODUCER)와 도매(WHOLESALE)는 독립 관리한다. 서로 다른 기관·데이터셋·비교 불가능한 상품·시장의 값을 하나의 표본 집합으로 합치지 않는다. RETAIL 원천 값은 보존할 수 있지만 본 산지·도매 집계에는 포함하지 않는다. 대표가격 계산을 AI에 위임하지 않는다.
 
-- **BE-TECH-SPEC-001:** 수집, 원본 보존, 추출·매핑, 정규화 및 기본 데이터 검증
-- **본 문서(BE-TECH-SPEC-002):** 가격 비교 가능성 판정, 기준 원천 선택, 기간 가격 집계 및 조회
-- 가격 유형은 산지(`PRODUCER`)와 도매(`WHOLESALE`)를 독립적으로 관리한다.
-- 산지 가격과 도매 가격, 서로 다른 기관·데이터셋의 값은 하나의 표본 집합으로 합치지 않는다.
+## 2 데이터 모델과 집계 키
 
-## 2. Data Model
+| 모델                            | 책임                                                     |
+| ------------------------------- | -------------------------------------------------------- |
+| NORMALIZED_OBSERVATION          | 어종·관측일·원본·정규화 버전·독립성·검증 상태            |
+| PRICE_OBSERVATION               | 원천 가격·단위·통계·상품 조건과 표준 KRW/kg 값·환산 근거 |
+| EVIDENCE / OBSERVATION_EVIDENCE | 가격 수치의 원문 근거와 연결 역할                        |
+| VALIDATION_ISSUE                | 관측·근거 문제와 처리 이력                               |
+| PERIOD_PRICE                    | 집계 키별 불변 대표가격 버전                             |
+| PERIOD_PRICE_INPUT              | 해당 버전의 적격 원본 관측 및 일별 절사 역할             |
 
-| 모델                    | 책임                                               |
-| ----------------------- | -------------------------------------------------- |
-| `NormalizedObservation` | 내부 어종, 관측 유형·기간, 출처 및 추출 방식       |
-| `PriceObservation`      | 가격, 가격 유형, 통화·단위, 통계 종류 및 상품 조건 |
-| `ObservationValidation` | 검증 상태와 검증 사유                              |
-| `PeriodPrice`           | 기간별 대표 가격과 계산 근거                       |
+집계 키는 `(species_id, price_type, provider, dataset, reference_filter, granularity, period_start, period_end)`다. reference_filter는 규격·등급·시장·원산지 등 비교 기준을 정해진 타입·키·값 규약으로 정규화한다. 빈 조건이 모든 상품의 혼합 허용을 뜻하지 않는다.
 
-`PriceObservation`은 `NormalizedObservation`의 가격 상세 모델이다. 가격 도메인에서 원본이나 정규화 관측값을 중복 저장하지 않는다.
+일별 그룹은 같은 어종·가격 유형·기준 원천/데이터셋·비교 조건·표준 단위·관측일로 구성한다. granularity와 기간은 일별 결과를 묶을 때 적용한다. period_start/end는 관측 기준 기간이며 수집일이나 문서 발행일이 아니다.
 
-### 2.1 Implementation Contracts
+## 3 집계 적격성
 
-가격 계산 규칙은 인터페이스와 도메인 서비스로 구현하고, 가격 관측값·기간 가격은 영속 데이터 모델로 구현한다. 아래 Java 코드는 구현 경계와 모델 책임을 보여주는 논리 예시다. 외부 응답 DTO는 이 도메인 모델로 직접 사용하지 않는다.
+다음 조건을 모두 충족한 가격 관측만 자동 선택한다.
+
+1. 관측 상태가 VALID이고 원본 위치와 수치를 지지하는 근거를 추적할 수 있다.
+2. 어종·산지/도매 구분·단일 관측일을 식별할 수 있다. 일별 입력은 관측 period_start=period_end다.
+3. 기준 원천과 상품·규격·시장 조건이 비교 가능하다.
+4. 승인된 근거로 `price_krw_per_kg`가 준비되어 있다.
+5. 독립 사건이 확인되어 있고 같은 사건의 중복 버전을 제거할 수 있다.
+6. 현재 적용할 정정·검증 버전이 명시적으로 선택되어 있다.
+
+REVIEW_REQUIRED, INVALID, 미매핑, 미확인 단위/기간, citation_status=UNKNOWN 또는 independence_key 미확인 값은 자동 집계에서 제외한다. Evidence PASS 또는 관측 VALID만으로 나머지 조건을 생략하지 않는다. 문서의 월평균 가격을 일별 가격 여러 건으로 복제하지 않는다.
+
+KMI pc=0은 유효한 0원으로 자동 처리하지 않는다. aT 가격은 원천 통계와 거래 단위를 확인하며 평균·최저·최고 필드들을 독립 거래 여러 건으로 무조건 펼치지 않는다. GROUP 매핑은 별도의 비교 가능성 확인 없이는 적격하지 않다.
+
+### 3.1 독립 사건과 정정
+
+independence_key가 같은 여러 관측은 같은 사건의 재인용 또는 처리 버전일 수 있다. 검증된 적용 버전 하나만 선택한다. 확정된 정정으로 대체된 구버전을 다시 적격 값으로 선택하지 않으며, 구버전의 대체 사유는 001의 현재 검증 상태와 이슈로 관리한다.
+
+원출처 문서 키 하나에 여러 독립 거래가 들어갈 수 있으므로 cited_origin_key만으로 전체 문서의 거래를 합치지 않는다. 같은 날짜·가격의 다른 거래는 독립 표본일 수 있다. 여러 기사가 전달한 같은 원출처 사건은 근거가 여러 개여도 가격 표본 하나다.
+
+### 3.2 표준 단위
+
+원천 price/currency/unit는 보존하고 표준가격은 별도 필드로 사용한다. normalization_basis에는 승인된 환산계수·규칙·근거를 고정하고 관측 normalization_version과 연결한다. 원/kg이면 항등 환산, 원/상자이면 확인된 상자 중량 등 승인 근거가 필요하다. 근거 없는 단위·통화 변환은 하지 않는다.
+
+표시용 반올림 값을 집계 입력이나 독립 사건 판정에 사용하지 않는다. 계산과 표시 정밀도를 구분하고 구현의 나눗셈·저장 반올림 규약을 정책 버전과 함께 고정한다. 물리 NUMERIC 정밀도는 실제 원천 범위 확인 후 정한다.
+
+## 4 두 단계 집계 정책
+
+### 4.1 일별 대표가격
+
+해당 날짜의 적격 독립 원본 건수 n에 따라 계산한다.
+
+| n      | 일별 가격                             | 제외 건수 |
+| ------ | ------------------------------------- | --------: |
+| 0      | 산출하지 않음                         |         0 |
+| 1~4    | 중앙값                                |         0 |
+| 5 이상 | 최저 1건과 최고 1건을 제외한 산술평균 |         2 |
+
+짝수 중앙값은 가운데 두 값의 산술평균이다. 동률의 절사 대상은 `(price_krw_per_kg, observation_id)`로 안정 정렬해 고정한다. 값이 같아도 최저·최고 각각 정확히 한 관측만 절사한다.
+
+### 4.2 반월과 월 대표가격
+
+유효 일별 가격이 존재하는 날짜 집합을 D라고 하면 기간가격은 `sum(daily_price[d]) / |D|`다. 원본 관측 수를 가중치로 사용하지 않고, 관측이 없는 날짜를 0원으로 채우지 않는다. 유효 일별 가격이 없으면 기간 결과를 산출하지 않는다.
+
+반월은 매월 1~15일과 16일~말일, 월은 1일~말일이다. 미완료 기간 가격은 내부 검토·계산할 수 있지만 `PERIOD_PRICE`에 저장하지 않는다. 사용자 API, 홈, 차트 및 PriceInsight 생성 입력은 완료된 기간의 가격만 사용한다. 기간 종료 후 해당 기간의 유효 일별 가격을 집계해 저장한다. 완료 기간의 관측 일수가 적더라도 실제 유효 일별 가격만 평균하며 누락일을 0원으로 보간하지 않는다. `observed_day_count`와 실제 데이터 기준시각(`data_as_of`)을 결과 전달에 보존한다. `data_as_of`는 선택 입력 원천이 제공한 실제 기준시각을 사용하며, 계산 시각 `calculated_at`으로 대체하지 않는다. 원천에 기준시각이 없으면 임의 생성하지 않고 미제공으로 처리한다.
+
+### 4.3 지표
+
+| 결과 항목                  | 정의                                        |
+| -------------------------- | ------------------------------------------- |
+| observation_count          | 기간 내 절사 전 적격 독립 원본 관측 총수    |
+| excluded_count             | 일별 최고·최저 절사로 제외한 원본 관측 합계 |
+| observed_day_count         | 유효 일별 가격 수. 기간 평균의 분모         |
+| calculation_policy_version | price-aggregation-v2                        |
+
+`observation_count`는 기간 평균의 분모나 가중치가 아니다. `data_as_of`는 결과 전달 시 사용하는 값이며, 선택 입력과 연결된 `COLLECTED_SOURCE.metadata`의 실제 데이터 기준시각을 보존해 전달한다. 이는 `PERIOD_PRICE` 컬럼이 아니며 새 테이블이나 컬럼을 추가하지 않는다. 정책의 표본 규칙이나 집계 단계를 변경하면 새 정책 식별자를 사용한다.
+
+### 4.4 계산 예시
+
+| 예시 | 같은 일별 그룹의 가격                      | 일별 결과 | 절사 수 |
+| ---- | ------------------------------------------ | --------: | ------: |
+| 0건  | 없음                                       |    미산출 |       0 |
+| 1건  | 12,000                                     |    12,000 |       0 |
+| 4건  | 10,000 / 12,000 / 14,000 / 20,000          |    13,000 |       0 |
+| 5건  | 10,000 / 11,000 / 12,000 / 13,000 / 30,000 |    12,000 |       2 |
+
+기간 예시에서 1일의 유효 관측 2건 `[10,000,14,000]`은 중앙값 12,000, 2일의 유효 관측 5건 `[1,000,10,000,20,000,30,000,100,000]`은 절사평균 20,000이며, 3일은 무관측이라고 가정한다. 기간가격은 `(12,000+20,000)/2=16,000원/kg`이다. 절사 전 원본 관측 합은 7건이므로 `observation_count=7`, `excluded_count=2`, `observed_day_count=2`다. 원본 수로 가중하면 `(12,000×2+20,000×5)/7≈17,714원`이 되어 잘못된 계산이다.
+
+## 5 구현 계약과 파이프라인
 
 ```java
-// 검증된 관측값 중 집계 입력으로 사용할 수 있는 값만 선택한다.
 public interface PriceObservationSelector {
     List<EligiblePriceObservation> select(PriceAggregationCriteria criteria);
 }
-
-// 같은 날짜의 적격 관측값에서 일별 가격을 산출한다.
 public interface DailyPriceCalculator {
     Optional<DailyPrice> calculate(List<EligiblePriceObservation> observations);
 }
-
-// 유효 일별 가격을 단순 산술평균해 기간 가격을 산출한다.
 public interface PeriodPriceCalculator {
     PeriodPriceResult calculate(
-        PriceAggregationCriteria criteria,
-        List<DailyPrice> dailyPrices
+        PriceAggregationCriteria criteria, List<DailyPrice> dailyPrices
     );
 }
-
-// 원천 선택, 입력 조회, 계산 및 결과 저장을 조정한다.
-public class PeriodPriceService {
-    PeriodPriceCalculator calculator;
-    DailyPriceCalculator dailyCalculator;
-    PriceObservationSelector selector;
-    PeriodPriceRepository repository;
-}
-
 public record PriceAggregationCriteria(
-    Long speciesId,
-    PriceType priceType,       // PRODUCER 또는 WHOLESALE
-    Granularity granularity,   // HALF_MONTH 또는 MONTH
-    LocalDate periodStart,
-    LocalDate periodEnd,
-    String provider,
-    String dataset,
-    Map<String, Object> referenceFilter
+    Long speciesId, PriceType priceType, Granularity granularity,
+    LocalDate periodStart, LocalDate periodEnd,
+    String provider, String dataset, Map<String, Object> referenceFilter
 ) {}
-
-// 입력 관측값 참조와 가격 값. 검증·비교 가능성은 선택 단계에서 확인한다.
 public record EligiblePriceObservation(
-    UUID observationId,
-    LocalDate observedAt,
-    BigDecimal priceKrwPerKg
+    UUID observationId, String independenceKey,
+    LocalDate observedAt, BigDecimal priceKrwPerKg
 ) {}
-
 public record DailyPrice(
-    LocalDate observedAt,
-    BigDecimal priceKrwPerKg,
-    int observationCount,
-    int excludedCount
+    LocalDate observedAt, BigDecimal priceKrwPerKg,
+    int observationCount, int excludedCount
 ) {}
-
-// 저장되는 계산 결과 모델; 실제 구현에서는 Entity/Repository로 매핑한다.
-public class PeriodPrice {
-    Long id;
-    Long speciesId;
-    PriceType priceType;
-    Granularity granularity;
-    LocalDate periodStart;
-    LocalDate periodEnd;
-    BigDecimal price;
-    String provider;
-    String dataset;
-    Map<String, Object> referenceFilter;
-    int observationCount;  // trim 전, 해당 기간의 적격 독립 원본 관측 총수
-    int excludedCount;     // 일별 산출에서 절사한 원본 관측 총수
-    int observedDayCount;  // 유효 일별 가격이 산출된 날짜 수
-    String calculationPolicyVersion;
-    Instant calculatedAt;
-}
 ```
 
-`PriceObservationSelector`는 BE-TECH-SPEC-001의 검증 상태와 출처를 확인하고 가격 도메인의 비교 조건을 적용한다. 계산기는 날짜별 가격 산출과 기간 가격 산출을 분리한다. 어느 계산기도 원천 수집이나 정규화를 수행하지 않는다.
-
-### `period_price`
-
-| 필드                         | 설명                         |
-| ---------------------------- | ---------------------------- |
-| `id`                         | 기간 가격 ID                 |
-| `species_id`                 | 내부 어종 ID                 |
-| `price_type`                 | `PRODUCER` 또는 `WHOLESALE`  |
-| `granularity`                | `HALF_MONTH` 또는 `MONTH`    |
-| `period_start`, `period_end` | 집계 기간                    |
-| `price`                      | 대표 가격 (KRW/kg)           |
-| `provider`, `dataset`        | 기준 원천 및 데이터셋        |
-| `reference_filter`           | 기준 상품·시장 조건          |
-| `observation_count`          | 절사 전 기간 내 적격 독립 원본 관측 총수. 기간 평균의 가중치가 아님 |
-| `excluded_count`             | 일별 절사 규칙으로 제외한 원본 관측 총수 |
-| `observed_day_count`         | 유효 일별 가격이 산출되어 기간 평균에 포함된 날짜 수; 평균의 분모 |
-| `calculation_policy_version` | 적용한 계산 정책 버전 (`price-aggregation-v2`) |
-| `calculated_at`              | 계산 시각                    |
-
-## 3. Aggregation Eligibility
-
-집계 입력은 다음 조건을 충족해야 한다.
-
-- 검증 상태가 `VALID`이고 원본 출처와 관측 근거를 추적할 수 있다.
-- 내부 어종, 산지·도매 가격 유형, 관측 기준일 및 가격 단위를 식별할 수 있다.
-- 상품·등급·규격·시장 조건이 선택된 기준 원천과 비교 가능하다.
-- 독립 관측값이어야 하며, 기사나 발간물의 재인용 수치를 중복 계산하지 않는다.
-- 가격 값과 단위의 의미가 유효해야 한다.
-
-`REVIEW_REQUIRED`, `INVALID`, 매핑 실패, 기간·단위 불명확 또는 독립 여부가 확인되지 않은 값은 자동 집계에서 제외한다. 외부 품목의 `GROUP` 매핑은 가격 비교 가능성을 보장하지 않는다.
-
-동일 날짜의 복수값은 임의로 평균하거나 제거하지 않는다. 해당 값의 통계 의미와 독립 관측 여부를 확인해 집계 적합성을 판단한다.
-
-## 4. Aggregation Policy
-
-집계는 어종, 가격 유형, 기준 원천, 비교 조건 및 기간별로 독립 수행한다. 동일 날짜·어종·가격 유형·기준 원천·비교 가능한 상품 조건·표준 단위의 독립 관측값을 한 일별 그룹으로 묶는다. 서로 다른 날짜 또는 기준 원천의 관측값은 같은 일별 표본에 합치지 않는다. 기준 원천과 참조 조건은 결과에 기록한다.
-
-계산은 다음 두 단계로 수행한다.
-
-**1단계 — 일별 가격 산출:** 각 일별 그룹의 적격 독립 관측 건수로 아래 표본 수 규칙을 적용한다. 0건이면 그 날짜의 일별 가격을 만들지 않는다.
-
-**2단계 — 반월·월 가격 산출:** 요청 기간 내 1단계에서 산출된 유효 일별 가격을 단순 산술평균한다. 관측이 없는 날짜는 제외하며, 원본 관측 건수를 가중치로 쓰지 않는다. 기간 경계는 반월 1~15일·16일~말일, 월별 1일~말일이다.
-
-| 유효 관측 건수 | 산출 방식                                 | 제외 건수 |
-| -------------: | ----------------------------------------- | --------: |
-|       5건 이상 | 최고값 1건과 최저값 1건을 제외한 산술평균 |         2 |
-|          1~4건 | 중앙값                                    |         0 |
-|            0건 | 결과를 산출하지 않음                      |         0 |
-
-짝수 개 중앙값은 가운데 두 값의 산술평균이다. 입력은 독립적인 일별 그룹으로 구성하며 중복 관측으로 표본 수를 부풀리지 않는다. 결과 가격의 기준 단위는 KRW/kg이다. 승인된 변환 근거가 없는 서로 다른 단위는 함께 집계하지 않는다.
-
-### 4.1 Calculation Examples and Boundary Tests
-
-아래 일별 테스트의 입력은 모두 같은 관측일·어종·가격 유형·기준 원천·비교 가능한 상품 조건·표준 단위의 독립적인 유효 관측값이다.
-
-| 테스트 | 일별 입력 가격 | 유효 관측 건수 | 일별 결과 | 일별 `excluded_count` |
-|---|---|---:|---:|---:|
-| DAILY-00 | 없음 | 0 | 미산출 | 0 |
-| DAILY-01 | 12,000 | 1 | 12,000 | 0 |
-| DAILY-04 | 10,000, 12,000, 14,000, 20,000 | 4 | 13,000 (중앙값) | 0 |
-| DAILY-05 | 10,000, 11,000, 12,000, 13,000, 30,000 | 5 | 12,000 (10,000·30,000 절사) | 2 |
-
-기간 계산 테스트에서는 같은 기준 그룹으로 1일차 입력 `[10,000, 14,000]`의 일별 중앙값이 12,000, 2일차 입력 `[1,000, 10,000, 20,000, 30,000, 100,000]`의 일별 절사평균이 20,000이라고 가정한다. 3일차에는 관측값이 없다. 기간 가격은 `(12,000 + 20,000) / 2 = 16,000`이다. 결과 지표는 `observation_count=7`(절사 전 적격 원본 관측 합계), `excluded_count=2`, `observed_day_count=2`이며, `observation_count`를 기간 가격 가중치로 사용하지 않는다. 원본 관측 수로 잘못 가중하면 약 17,714원이 되어 결과가 달라진다.
-
-기간 단순평균 경계 테스트는 유효 일별 가격 0건이면 기간 결과 미산출, 1건이면 해당 일별 가격 그대로, 2건 이상이면 유효 일별 가격 산술평균으로 확인한다. 누락 날짜는 관측일 수나 분모에 포함하지 않는다.
-
-이 계약의 정책 식별자는 `price-aggregation-v2`다. 일별 표본 수 규칙이나 기간 집계 단계를 변경하면 새 정책 식별자를 부여하고 과거 계산 결과는 기존 식별자와 함께 보존한다.
-
-반월 기간은 매월 1~15일과 16일~말일이며, 월 기간은 매월 1일~말일이다. 집계에는 관측 기준일을 사용하고 발행일과 게시일은 관측일과 구분한다.
-
-## 5. Result Traceability
-
-계산 결과에는 어종, 가격 유형, granularity, 기간, 기준 원천, 참조 조건, trim 전 적격 독립 원본 관측 총수(`observation_count`), 일별 절사 총수(`excluded_count`), 유효 일별 가격 수(`observed_day_count`), 계산 정책 버전 및 계산 시각을 기록한다. `observation_count`는 기간 가격의 평균 분모나 가중치가 아니다. 기간 평균 분모는 `observed_day_count`다. 각 일별 결과와 원본 입력 관측값을 추적할 수 있도록 한다. 이번 계산 단계 구분 변경으로 새 결과는 `price-aggregation-v2`를 기록한다. 기존 결과와 정책 버전은 보존하고 영향을 받는 반월·월 결과를 v2로 재계산한다.
-
-### 5.1 Aggregation Pipeline
+코드는 논리 계약이며 영속 Entity 정의나 완성 구현이 아니다. PeriodPriceService가 기준 원천 선택→적격 입력 조회→일별 계산→기간 계산을 조정하고, 기간 종료 여부를 확인해 완료된 기간만 버전으로 저장한다. 미완료 기간의 내부 계산 결과는 저장·전달하지 않는다. 입력 선택기는 원본과 검증을 확인하고 계산기는 순수 계산만 담당한다.
 
 ```mermaid
-flowchart LR
-    A[BE-TECH-SPEC-001 정규화 관측값] --> B[VALID 상태·출처 확인]
-    B --> C[어종·가격 유형·기간 선택]
-    C --> D[기준 원천·상품·시장 조건 적용]
-    D --> E[날짜별 독립 관측 그룹 구성]
-    E --> F{해당 날짜 유효 관측 건수}
-    F -->|5건 이상| G[최고·최저 각 1건 제외 후 일별 산술평균]
-    F -->|1~4건| H[중앙값으로 일별 가격 산출]
-    F -->|0건| I[해당 날짜 결과 없음]
-    G --> J[유효 일별 가격 목록]
-    H --> J
-    I --> J
-    J --> K{기간 내 유효 일별 가격}
-    K -->|1일 이상| L[유효 일별 가격의 단순 산술평균]
-    K -->|0일| M[기간 가격 미산출]
-    L --> N[PeriodPrice 저장 및 v2 지표 기록]
-    N --> O[조회 응답]
+flowchart TD
+    A[001 및 003 관측 버전] --> B[유효성 독립성 단위와 비교 조건]
+    B --> C[같은 사건의 적용 버전 선택]
+    C --> D[날짜별 적격 독립 그룹]
+    D --> E{일별 표본 수}
+    E -->|0| N[해당 일 제외]
+    E -->|1~4| M[중앙값]
+    E -->|5 이상| T[최저 최고 각 1건 절사평균]
+    M --> L[유효 일별 가격]
+    T --> L
+    N --> L
+    L --> P{유효 일별 가격 존재}
+    P -->|없음| X[기간가격 미생성]
+    P -->|있음| V[일별 가격의 단순평균]
+    V --> PERIOD_COMPLETE{기간 종료 여부}
+    PERIOD_COMPLETE -->|아니오| INCOMPLETE_END[내부 계산만 종료, 저장·전달 안 함]
+    PERIOD_COMPLETE -->|예| S[PERIOD_PRICE와 입력 역할 원자 저장]
+    S --> I[003의 어종별 가격 및 이슈 변경 비교]
 ```
 
-### 5.2 Logical ERD
+## 6 버전과 입력 재현
 
-```mermaid
-erDiagram
-    SPECIES ||--o{ NORMALIZED_OBSERVATION : identifies
-    COLLECTED_SOURCE ||--o{ NORMALIZED_OBSERVATION : provenance
-    NORMALIZED_OBSERVATION ||--o| PRICE_OBSERVATION : price_detail
-    NORMALIZED_OBSERVATION ||--o{ OBSERVATION_VALIDATION : validation
-    SPECIES ||--o{ PERIOD_PRICE : has_period_price
+PERIOD_PRICE는 집계 키별 계산 결과의 불변 버전이다. 입력·정규화·정책이 달라지면 새 ID를 만든다. input_signature는 집계 키·정책·선택된 관측 버전·정규화 버전·절사 역할의 정렬된 입력으로 만든다. calculated_at 같은 실행 시각만으로 입력 서명을 바꾸지 않는다. 같은 서명은 기존 계산 버전을 재사용한다.
 
-    SPECIES {
-        bigint id PK
-        string code UK
-        string korean_name
-    }
-    COLLECTED_SOURCE {
-        uuid id PK
-        string source_type
-        string source_url
-        string content_ref
-        string content_hash
-        datetime collected_at
-    }
-    NORMALIZED_OBSERVATION {
-        uuid id PK
-        uuid source_id FK
-        bigint species_id FK
-        string observation_type
-        string extraction_method
-        date period_start
-        date period_end
-        string source_locator
-    }
-    PRICE_OBSERVATION {
-        uuid observation_id PK,FK
-        string price_type
-        decimal price
-        string currency
-        string unit
-        string price_statistic
-        json product_conditions
-    }
-    OBSERVATION_VALIDATION {
-        uuid id PK
-        uuid source_id FK
-        uuid observation_id FK
-        string status
-        string reason_code
-        datetime validated_at
-    }
-    PERIOD_PRICE {
-        bigint id PK
-        bigint species_id FK
-        string price_type
-        string granularity
-        date period_start
-        date period_end
-        decimal price
-        string provider
-        string dataset
-        json reference_filter
-        int observation_count
-        int excluded_count
-        int observed_day_count
-        string calculation_policy_version
-        datetime calculated_at
-    }
-```
+PERIOD_PRICE_INPUT에는 적격 표본을 INCLUDED/TRIMMED_MIN/TRIMMED_MAX로 모두 보존한다. 중앙값 계산에서도 적격 원본 전체를 INCLUDED로 남겨 정책으로 재현한다. 부적격·미매핑 후보는 연결하지 않으며 제외 사유는 원본/관측 검증 이력에 둔다. 연결 FK는 PRICE_OBSERVATION(observation_id)다.
+
+원본 관측과 표준가격·환산 근거, 기간가격과 입력 링크는 수정하지 않는다. 현재 검증 상태가 변경되어도 과거 계산은 당시 링크와 정책으로 재현하며 현재 적격성으로 입력을 다시 선택하지 않는다. 현재 조회용 적격성은 별도로 판정한다.
+
+## 7 트랜잭션과 재계산
+
+완료 기간 키별 REPEATABLE READ 트랜잭션에서 적격 입력을 고정하고 일별·기간 계산, input_signature, PERIOD_PRICE 및 모든 입력 링크를 함께 저장한다. 미완료 기간은 내부 계산만 허용하며 해당 결과와 입력 링크를 PERIOD_PRICE에 저장하거나 사용자·PriceInsight 입력으로 전달하지 않는다. 외부 호출을 포함하지 않으며 중복 서명 충돌은 기존 버전 재사용으로 처리한다. 직렬화 충돌·DB 재시도는 짧은 트랜잭션 범위에서 제한한다.
+
+새 관측·정정·검증 변경이 발생하면 해당 관측일이 포함된 반월·월 집계 키만 재검토한다. 독립 사건/적격성 선택이 바뀌지 않아 입력 서명이 같으면 계산 결과를 다시 쓰지 않는다. 입력 lineage가 바뀌어 새 가격 버전이 생겨도 사용자 표시 가격과 이슈가 같다면 PriceInsight 재생성은 생략할 수 있다.
+
+기존 정상 관측을 신규 수집 실패로 지우지 않는다. 정상 0건은 기존 원본의 철회가 아니다. 반면 명시적으로 가격의 오류·철회가 확인되어 적격 입력이 없어지면 기존 결과를 현재 유효 가격이라고 재선택하지 않는다. 현재 선택기는 PERIOD_PRICE_INPUT의 원본 상태와 해당 집계 키의 재평가 결과를 확인하고, 과거 가격은 이력으로 보존한다.
+
+## 8 조회와 PriceInsight 게시
+
+기본 가격 조회는 동일 집계 키에서 현재 적격 입력과 일치하는 버전을 선택한다. `MAX(id)`나 다른 원천의 결과를 섞어 최신값으로 취급하지 않는다. 정상 버전의 calculated_at과 입력 재현 정보를 함께 사용한다. 실패한 수집·재계산으로 가짜 새 가격이나 0원 결과를 만들지 않는다.
+
+사용자에게는 가격값·단위·기간·기준 원천·비교 조건·관측일 수·산출 시각을 제공할 수 있다. 대표가격의 데이터 기준과 마지막 배치 확인 시각을 구분한다. 데이터가 없으면 미산출로 표현하며 누락일을 보간하지 않는다.
+
+PriceInsight 화면의 차트와 설명은 같은 PUBLISHED 스냅샷의 가격 버전과 기준시각으로 제공한다. 계산 결과를 DB에 저장하는 것과 화면의 게시본을 전환하는 것은 다른 단계다. 새 생성 실패 시 이전 설명에 새 가격을 조용히 결합하지 않는다. 기존 게시본을 유지하되 그 실제 기준시각을 그대로 표시한다. 가격의 무효화가 확인된 경우 최신 정상 데이터라는 표시는 금지하고 검토 상태를 알린다.
+
+변경 없는 광어는 기존 차트와 Insight를 유지한다. 가격이 같아도 광어의 관련 이슈가 새로 생기거나 정정되면 003이 Insight 갱신을 판단한다. 최종 변경 판단은 003의 content_fingerprint를 사용하며 수집 시각이나 내부 ID 변화만으로 갱신하지 않는다.
+
+## 9 인수 기준과 버전 이력
+
+구현 시 §4.4 예시와 0/1/4/5건 경계, 동률 절사, 기간 무관측, 원천·상품 조건 분리, 재인용 중복, 정정 버전, 단위 환산, 과거 입력 재현을 확인한다. §4.4 기간 예시는 1일 2건과 2일 5건, 총 `observation_count=7`, 기간가격 16,000원, 절사 전 원본 수로 잘못 가중한 값 약 17,714원을 기대 결과로 사용한다. 이는 문서의 기대 결과이며 실행한 테스트 결과가 아니다.
+
+V1은 기존 002 v0.5의 두 단계 정책을 유지하면서 표준가격·환산 근거, 독립 사건·정정 선택, 불변 기간가격·입력 역할·input_signature, 영향 기간 재계산, 차트와 Insight의 게시 기준을 통합했다. 전체 컬럼과 관계는 통합 ERD V1을 따른다.
