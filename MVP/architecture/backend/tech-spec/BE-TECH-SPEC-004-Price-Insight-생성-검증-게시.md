@@ -841,33 +841,35 @@ public PublishResult publish(UUID batchId) {
 
     snapshotRepository.markPublished(snapshots);
 
-    batchRepository.markPublished(batchId);
+    batchRepository.markPublicationPublished(batchId);
 
     return PublishResult.published(batchId);
 }
 ```
 
-실제 구현에서는 잠금 순서 및 트랜잭션 격리 수준을 통일하여 배치 취소·Worker 완료·게시가 충돌하지 않도록 한다.
+실제 구현에서는 잠금 순서 및 트랜잭션 격리 수준을 통일하여 배치 취소·Worker 완료·게시가 충돌하지 않도록 한다. 게시 성공 반영은 `publication_status`와 `published_at`을 갱신하며 COLLECTION_BATCH 실행 `status`를 별도로 변경하지 않는다.
 
 Gemini API 호출은 게시 트랜잭션에 포함하지 않는다.
 
 ### 11.3 게시 상태
 
-`COLLECTION_BATCH`의 실행 상태와 사용자 공개 상태를 구분한다.
+`COLLECTION_BATCH.status`는 실행 결과를 나타내며 BE-TECH-SPEC-001·003과 BE-ERD-001의 공통 상태 어휘를 사용한다. `COMPLETED`는 실행 상태로 사용하지 않는다.
 
 ```text
-execution status:
+COLLECTION_BATCH.status / COLLECTION_JOB.status:
+  PENDING
   RUNNING
-  COMPLETED
+  SUCCEEDED
+  PARTIAL_SUCCESS
   FAILED
   CANCELLED
 
-publication status:
+COLLECTION_BATCH.publication_status:
   NOT_PUBLISHED
   PUBLISHED
 ```
 
-`COMPLETED`는 통합 실행과 정상 게시까지 끝난 상태로 정의한다.
+실행 `status`는 수집·분석 등 배치 실행 결과를 나타내고, `publication_status`는 통합 Insight 게시 결과를 나타낸다. 모든 게시 대상의 검증과 원자적 게시가 성공하면 실행 `status`가 `SUCCEEDED`인 경우와 허용된 선택 원천 실패로 `PARTIAL_SUCCESS`인 경우 모두 `publication_status=PUBLISHED`가 될 수 있다. 부분 수집 성공은 게시 성공을 뜻하지 않으며, 게시 성공도 부분 실행 상태를 `SUCCEEDED`로 승격하지 않는다. 필수 가격 조건이나 전체 Snapshot 검증·게시가 실패하면 `PUBLISHED`로 전환하지 않는다.
 
 ### 11.4 Last Known Good 조회
 

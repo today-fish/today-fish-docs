@@ -112,7 +112,7 @@ erDiagram
 
         string status "PENDING RUNNING SUCCEEDED PARTIAL_SUCCESS FAILED CANCELLED"
         jsonb target_insight_keys "배치 시작 시 고정한 게시 대상 Key 목록"
-        string publication_status "게시 단계 상태"
+        string publication_status "NOT_PUBLISHED PUBLISHED; 실행 상태와 독립"
         datetime published_at "전체 대상 원자 게시 시각"
 
     }
@@ -541,8 +541,11 @@ VALIDATION_ISSUE에는 `CHECK(num_nonnulls(source_id, analysis_run_id, observati
 | 가격 입력 역할  | INCLUDED, TRIMMED_MIN, TRIMMED_MAX                                                        |
 | ExtractionBatch | PENDING, RUNNING, SUCCEEDED, PARTIAL_SUCCESS, FAILED                                      |
 | Snapshot        | PENDING, RUNNING, GENERATED, PUBLISHED, FAILED                                            |
+| 게시 상태       | NOT_PUBLISHED, PUBLISHED (`COLLECTION_BATCH.publication_status`)                        |
 
 요청/분석은 배치 실행 기한 안에서 제한된 재시도를 RETRY_PENDING으로 예약한다. 배치 기한 내 완료되지 않은 재시도 작업은 해당 실행에서 최종 상태로 정리한다. 다음 일일 통합 배치가 이전 배치를 CANCELLED 처리하면 그 배치의 미완료 Request·AnalysisRun은 다시 실행하지 않으며, 정상 저장된 Source·Observation·Evidence는 재사용할 수 있다. 결과 반영은 부모 배치 상태와 현재 lease 소유권을 확인한다. Snapshot은 RUNNING에서 PENDING과 next_attempt_at으로 예약하고 시도 상한 소진 시 FAILED다. Batch/Job 종료 상태는 해당 실행 창의 요약이다.
+
+Batch/Job 실행 상태 어휘는 PENDING, RUNNING, SUCCEEDED, PARTIAL_SUCCESS, FAILED, CANCELLED다. `publication_status`는 실행 상태와 독립적이다. 허용된 선택 원천의 실패가 있어 실행이 PARTIAL_SUCCESS여도 필수 가격 조건과 모든 게시 검증이 충족되면 PUBLISHED가 될 수 있다. 게시 성공은 실행 상태를 SUCCEEDED로 바꾸지 않으며, 실패·취소 배치나 게시 검증이 실패한 배치는 PUBLISHED가 될 수 없다.
 
 현재 검증 상태와 VALIDATION_ISSUE의 문제·해결 이력을 분리한다. 확정된 정정으로 대체된 버전은 다시 현재 적격 값으로 선택하지 않도록 상태와 사유를 기록한다. 새 미검증 후보가 실패했다는 이유로 기존 정상 값을 무효화하지 않는다.
 
@@ -564,7 +567,7 @@ input_payload는 실제 입력 관측 버전과 값·단위·기간·상태, 기
 
 변경 판단은 최신 PUBLISHED와 비교한다. 같은 입력의 대기/실패 작업이 있으면 새 작업을 무한 생성하지 않고 기존 작업의 고정 입력·정책으로 재시도한다. 생성·검증 실패 시 이전 게시본을 유지하고 마지막 실제 데이터 기준시각을 보존한다. 기존 게시본이 없고 유효 가격이 없으면 파악 중으로 처리한다.
 
-게시 조회는 insight_key별 PUBLISHED 중 as_of DESC, published_at DESC, id DESC다. 늦게 끝난 과거 기준시각의 결과가 더 최신 기준의 게시본을 대체하지 않는다. 화면의 가격 차트와 설명은 같은 스냅샷의 가격 버전과 기준을 사용한다. Snapshot은 해당 배치의 insight_key별 결과다. 하나의 배치에서 모든 대상이 검증을 통과해야 전체를 한 트랜잭션으로 게시한다. 생성·검증·게시 실패 시 직전 정상 게시 배치를 제공하며 새 배치의 일부 결과만 노출하지 않는다. 자세한 계약은 BE-TECH-SPEC-004를 따른다.
+게시 조회는 먼저 `publication_status=PUBLISHED`인 COLLECTION_BATCH 중 `published_at DESC, id DESC` 순서로 최신 배치 하나를 선택한다. 요청 Key가 해당 배치의 `target_insight_keys` manifest에 포함된 경우에만 그 배치의 `(batch_id, insight_key)` Snapshot 중 PUBLISHED 결과를 조회한다. Key가 manifest에 없거나 해당 배치에 게시된 Snapshot이 없으면 과거 배치에서 같은 `insight_key`를 찾아 대체하지 않고 결과가 없는 것으로 처리한다. 따라서 기간이 바뀌어 새 manifest에서 빠진 과거 기간의 Snapshot은 현재 게시 결과로 반환되지 않는다. 화면의 가격 차트와 설명은 같은 게시 배치의 스냅샷·가격 버전·기준을 사용한다. 하나의 배치에서 모든 대상이 검증을 통과해야 전체를 한 트랜잭션으로 게시한다. 생성·검증·게시 실패 시 직전 정상 게시 배치를 제공하며 새 배치의 일부 결과만 노출하지 않는다. 자세한 계약은 BE-TECH-SPEC-004를 따른다.
 
 ## 9 JSONB와 실행 제약
 
