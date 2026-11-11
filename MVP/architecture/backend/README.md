@@ -25,6 +25,7 @@
 | [BE-TECH-SPEC-002](tech-spec/BE-TECH-SPEC-002-가격-데이터-모델링-및-산지-도매가격-산출.md) | 가격 데이터 모델링·산출 | 산지·도매 가격의 독립 집계와 기간 가격 |
 | [BE-TECH-SPEC-003](tech-spec/BE-TECH-SPEC-003-PDF-기사-수집-및-정보-추출.md) | PDF·기사 수집 및 정보 추출 | 원본 보존·Gemini 추출·Fact 및 Evidence 검증 |
 | [BE-TECH-SPEC-004](tech-spec/BE-TECH-SPEC-004-Price-Insight-생성-검증-게시.md) | Price Insight 생성·검증·게시 | 입력 선정·생성·검증·전체 원자적 게시 |
+| [BE-TECH-SPEC-005](tech-spec/BE-TECH-SPEC-005-사용자-식별-인증-세션.md) | 익명 사용자 식별·인증 | JWT·CSRF·WebSocket Principal (**Draft, 동기화 검토**) |
 
 문서별 책임 경계와 병렬 입력 처리 흐름은 [tech-spec/README.md](tech-spec/README.md)를 단일 기준으로 따른다.
 
