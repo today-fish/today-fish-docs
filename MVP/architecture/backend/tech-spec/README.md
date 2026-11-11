@@ -10,6 +10,7 @@
 | [BE-TECH-SPEC-002](BE-TECH-SPEC-002-가격-데이터-모델링-및-산지-도매가격-산출.md) | 가격 적격성, 산지·도매 대표가격, 월·반월 집계 |
 | [BE-TECH-SPEC-003](BE-TECH-SPEC-003-PDF-기사-수집-및-정보-추출.md) | PDF·뉴스 수집, Gemini 정보 추출, Fact·Evidence 검증 |
 | [BE-TECH-SPEC-004](BE-TECH-SPEC-004-Price-Insight-생성-검증-게시.md) | Insight 입력 선정·생성·검증, PRICE_ONLY, 전체 원자적 게시 |
+| [BE-TECH-SPEC-005](BE-TECH-SPEC-005-사용자-식별-인증-세션.md) | 익명 사용자·JWT·CSRF·WebSocket Principal (**Draft**, 006의 채팅 참여자 세션과 분리) |
 | [BE-ERD-001](../erd/BE-ERD-001-통합-데이터-모델.md) | 17개 논리 테이블과 관계·키·제약의 통합 기준 |
 
 ## 처리 흐름
