@@ -167,10 +167,10 @@ VALID는 기본 유효성 판정이다. 집계할 가격 단계·기준 원천·
 | -------------------- | ----------------------------------------- | ------------------------------------------------------------- |
 | Batch / Job          | PENDING → RUNNING → SUCCEEDED             | PARTIAL_SUCCESS, FAILED, CANCELLED                            |
 | Request              | PENDING → RUNNING → SUCCEEDED / NO_DATA   | RETRY_PENDING → RUNNING, EXCLUDED_BY_POLICY, FAILED_PERMANENT |
-| AnalysisRun          | PENDING → RUNNING → SUCCEEDED             | RETRY_PENDING → RUNNING, REVIEW, FAILED_PERMANENT             |
+| AnalysisRun          | PENDING → RUNNING → SUCCEEDED             | RETRY_PENDING → RUNNING, REVIEW, FAILED_PERMANENT, CANCELLED  |
 | PriceInsightSnapshot | 004의 상태·전이 정책 적용                 | 생성·검증·게시 상태는 004에서 관리                            |
 
-Batch/Job은 해당 실행 창의 요약이며 기존 SUCCEEDED·PARTIAL_SUCCESS 의미는 유지한다. 새 일일 통합 배치가 시작될 때 이전 미완료 배치는 `CANCELLED`로 처리한다. 취소된 배치의 Request/Analysis 작업은 다음 배치에서 재실행하지 않는다. 이미 정상 저장된 Source·Observation·Evidence는 보존하고 새 배치에서 재사용할 수 있다. 정상 0건만 있는 작업은 실패가 아니다. Request 성공 뒤 문서 분석이 실패해도 원본 수집 성공을 취소하지 않는다. 실행 상태와 별도인 `publication_status`는 ERD와 004의 정책을 따른다.
+Batch/Job은 해당 실행 창의 요약이며 기존 SUCCEEDED·PARTIAL_SUCCESS 의미는 유지한다. 새 일일 통합 배치가 시작될 때 이전 미완료 배치는 `CANCELLED`로 처리한다. 취소된 배치의 Request는 다음 배치에서 재실행하지 않는다. 미완료 AnalysisRun은 `CANCELLED` 처리하고 같은 행은 재실행하지 않는다. 다음 배치는 성공한 동일 설정 분석을 재사용하며, 기존 실행이 없거나 이전 실행이 상위 배치 취소로 `CANCELLED`된 경우에만 정상 Source·Observation·Evidence를 기반으로 새 배치 소유의 AnalysisRun을 등록한다. `REVIEW`·`FAILED_PERMANENT` 실행은 자동 재실행하지 않는다. 정상 0건만 있는 작업은 실패가 아니다. Request 성공 뒤 문서 분석이 실패해도 원본 수집 성공을 취소하지 않는다. 실행 상태와 별도인 `publication_status`는 ERD와 004의 정책을 따른다.
 
 | 트랜잭션   | 함께 반영할 작업                                  |
 | ---------- | ------------------------------------------------- |
@@ -202,7 +202,7 @@ API는 점유 후 원본 확보·매핑·검증을 수행하고, 원본 수집 �
 - API 원본 행과 관측·Evidence를 역추적할 수 있다.
 - 같은 사건의 재인용은 중복 표본이 되지 않고 다른 독립 거래는 유지된다.
 - 만료된 작업자의 늦은 응답이 새 작업의 결과를 덮어쓰지 않는다.
-- 이전 통합 배치 취소 후 그 배치의 미완료 작업이 다음 배치에서 재실행되지 않는다.
+- 이전 통합 배치 취소 후 미완료 Request는 재실행하지 않고 기존 AnalysisRun은 CANCELLED 처리하며, 새 실행은 새 배치 소유 키를 사용한다.
 - 취소된 Worker의 지연 결과가 저장·게시되지 않는다.
 - 새 배치에서 기존 정상 Source·Observation·Evidence를 재사용할 수 있다.
 - 승인 ERD의 컬럼·상태·NULL 규칙과 002/003의 공통 계약이 일치한다.
@@ -215,4 +215,4 @@ API는 점유 후 원본 확보·매핑·검증을 수행하고, 원본 수집 �
 
 ### V1.1 — 2026-11-11
 
-BE-TECH-SPEC-003 V1.1, BE-TECH-SPEC-004 v0.2 및 BE-ERD-001 V1.1과 배치 취소·Insight 생성 책임·참조를 정합화했다. 기존 데이터 원천·정규화·검증 정책은 유지한다.
+BE-TECH-SPEC-003 V1.1, BE-TECH-SPEC-004 v0.2 및 BE-ERD-001 V1.1과 배치 취소, 기존 미완료 AnalysisRun 종료 및 새 배치 소유 실행 등록, Insight 생성 책임·참조를 정합화했다. 기존 데이터 원천·정규화·검증 정책은 유지한다.

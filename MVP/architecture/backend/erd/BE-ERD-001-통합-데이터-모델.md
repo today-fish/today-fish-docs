@@ -227,7 +227,7 @@ erDiagram
         string batch_key UK "통합 배치·어종·플랫폼 멱등 키"
         bigint species_id FK "대상 어종"
         string search_platform "뉴스 검색 플랫폼"
-        string status "추출 배치 상태"
+        string status "PENDING RUNNING SUCCEEDED PARTIAL_SUCCESS FAILED CANCELLED"
         int target_article_count "어종×플랫폼별 최대 15개 기사"
         datetime started_at "실행 시작 시각"
         datetime completed_at "실행 종료 시각"
@@ -240,7 +240,7 @@ erDiagram
         uuid source_id FK "분석 대상 원본"
         uuid extraction_batch_id FK "뉴스 전용 추출 배치이며 PDF는 빈 값"
 
-        string idempotency_key UK "중복 실행 방지 키"
+        string idempotency_key UK "owner_kind:execution_owner_id:digest 형식의 배치 소유 실행 키"
 
         string model_id "실제 Gemini 모델 ID"
 
@@ -248,7 +248,7 @@ erDiagram
 
         string schema_version "응답 스키마 버전"
 
-        string status "분석 실행 상태"
+        string status "PENDING RUNNING SUCCEEDED RETRY_PENDING REVIEW FAILED_PERMANENT CANCELLED"
 
         int attempt_count "실행 시도 횟수"
 
@@ -497,7 +497,7 @@ erDiagram
 | Job      | execution_key: batch_id와 유형·기관·데이터셋·범위                                              |
 | Request  | request_key: job_id와 단계·실제 요청 조건                                                      |
 | Source   | UNIQUE(source_key, content_hash). source_key는 기관·데이터셋·실제 API 조건 또는 정규 문서 식별 |
-| Analysis | idempotency_key: source_id·내용 해시·모델·프롬프트·응답 스키마                                 |
+| Analysis | idempotency_key: 실행 소유자 유형·ID를 식별 가능한 접두부로 보존하고 Source·내용 해시·소유자·모델·프롬프트·응답 스키마를 해시 |
 | 관측     | dedupe_fingerprint: 원본 행·처리 설정·정규화 버전과 상세 내용                                  |
 | 기간가격 | input_signature: 집계 키·정책·선택한 관측 버전·정규화 버전·절사 역할                           |
 | Insight  | UNIQUE(batch_id, insight_key); content_fingerprint NULL 허용. 게시 계약은 004                  |
@@ -533,17 +533,17 @@ VALIDATION_ISSUE에는 `CHECK(num_nonnulls(source_id, analysis_run_id, observati
 | --------------- | ----------------------------------------------------------------------------------------- |
 | Batch / Job     | PENDING, RUNNING, SUCCEEDED, PARTIAL_SUCCESS, FAILED, CANCELLED                           |
 | Request         | PENDING, RUNNING, SUCCEEDED, NO_DATA, RETRY_PENDING, EXCLUDED_BY_POLICY, FAILED_PERMANENT |
-| AnalysisRun     | PENDING, RUNNING, SUCCEEDED, RETRY_PENDING, REVIEW, FAILED_PERMANENT                      |
+| AnalysisRun     | PENDING, RUNNING, SUCCEEDED, RETRY_PENDING, REVIEW, FAILED_PERMANENT, CANCELLED           |
 | 관측 검증       | VALID, REVIEW_REQUIRED, INVALID                                                           |
 | Evidence 검증   | UNREVIEWED, PASS, REVIEW, REJECTED                                                        |
 | citation_status | DIRECT, VERIFIED_CITATION, UNKNOWN                                                        |
 | 근거 연결 역할  | SUPPORTS_VALUE, EXPLAINS_CHANGE, CONTEXT                                                  |
 | 가격 입력 역할  | INCLUDED, TRIMMED_MIN, TRIMMED_MAX                                                        |
-| ExtractionBatch | PENDING, RUNNING, SUCCEEDED, PARTIAL_SUCCESS, FAILED                                      |
+| ExtractionBatch | PENDING, RUNNING, SUCCEEDED, PARTIAL_SUCCESS, FAILED, CANCELLED                           |
 | Snapshot        | PENDING, RUNNING, GENERATED, PUBLISHED, FAILED                                            |
 | 게시 상태       | NOT_PUBLISHED, PUBLISHED (`COLLECTION_BATCH.publication_status`)                        |
 
-요청/분석은 배치 실행 기한 안에서 제한된 재시도를 RETRY_PENDING으로 예약한다. 배치 기한 내 완료되지 않은 재시도 작업은 해당 실행에서 최종 상태로 정리한다. 다음 일일 통합 배치가 이전 배치를 CANCELLED 처리하면 그 배치의 미완료 Request·AnalysisRun은 다시 실행하지 않으며, 정상 저장된 Source·Observation·Evidence는 재사용할 수 있다. 결과 반영은 부모 배치 상태와 현재 lease 소유권을 확인한다. Snapshot은 RUNNING에서 PENDING과 next_attempt_at으로 예약하고 시도 상한 소진 시 FAILED다. Batch/Job 종료 상태는 해당 실행 창의 요약이다.
+요청/분석은 배치 실행 기한 안에서 제한된 재시도를 RETRY_PENDING으로 예약한다. 배치 기한 내 완료되지 않은 재시도 작업은 해당 실행에서 최종 상태로 정리한다. 다음 일일 통합 배치가 이전 배치를 CANCELLED 처리하면 미완료 Request는 재실행하지 않고, PENDING·RUNNING·RETRY_PENDING AnalysisRun과 PENDING·RUNNING 뉴스 ExtractionBatch는 CANCELLED로 전이한다. AnalysisRun의 error_code에는 PARENT_BATCH_CANCELLED를 기록하고 lease_token·lease_until·next_attempt_at을 비워 늦은 결과와 재점유를 차단한다. 취소된 AnalysisRun 행은 재실행하지 않는다. 다음 배치는 정상 저장된 Source·Observation·Evidence와 동일 설정의 성공 분석을 재사용한다. 기존 실행이 없거나 상위 배치 취소로 이전 실행이 CANCELLED된 경우에만 새 실행 소유자의 AnalysisRun을 등록한다. REVIEW·FAILED_PERMANENT는 자동 재실행하지 않는다. PDF 실행 소유자는 현재 실행의 COLLECTION_BATCH ID이며 뉴스 실행 소유자는 새 DOCUMENT_EXTRACTION_BATCH ID다. AnalysisRun.idempotency_key는 `owner_kind:execution_owner_id:digest` 형식으로 저장하고 digest에는 source_id·content_hash·owner_kind·execution_owner_id·model_id·prompt_version·schema_version이 포함된다. 실행 소유자 접두부로 부모 배치를 검증하며 뉴스는 extraction_batch_id와 소유자 ID의 일치를 확인한다. 성공 결과 검색은 별도 저장 키를 만들지 않고 Source·내용 해시·모델·프롬프트·스키마가 같고 SUCCEEDED인 실행을 조회한다. 결과 반영은 부모 배치 상태와 현재 lease 소유권을 확인한다. Snapshot은 RUNNING에서 PENDING과 next_attempt_at으로 예약하고 시도 상한 소진 시 FAILED다. Batch/Job 종료 상태는 해당 실행 창의 요약이다.
 
 Batch/Job 실행 상태 어휘는 PENDING, RUNNING, SUCCEEDED, PARTIAL_SUCCESS, FAILED, CANCELLED다. `publication_status`는 실행 상태와 독립적이다. 허용된 선택 원천의 실패가 있어 실행이 PARTIAL_SUCCESS여도 필수 가격 조건과 모든 게시 검증이 충족되면 PUBLISHED가 될 수 있다. 게시 성공은 실행 상태를 SUCCEEDED로 바꾸지 않으며, 실패·취소 배치나 게시 검증이 실패한 배치는 PUBLISHED가 될 수 없다.
 
@@ -587,4 +587,4 @@ Evidence.source_locator는 페이지·문단·표 위치와 재인용 원출처 
 
 ### V1.1 — 2026-11-11
 
-승인된 001·002·003 V1.1 및 004 v0.2와 정합시켜 17개 논리 테이블 기준을 반영하고, 통합 배치 취소 후 미완료 작업의 재실행 금지와 정상 저장 데이터 재사용 조건을 명시했다. 테이블·컬럼·관계·제약은 기존 승인 모델과 승인된 개정 범위를 따른다. 문서 개정은 구현·마이그레이션 실행이나 성능 검증 완료를 의미하지 않는다.
+승인된 001·002·003 V1.1 및 004 v0.2와 정합시켜 17개 논리 테이블 기준을 반영하고, 통합 배치 취소 후 기존 미완료 AnalysisRun 행의 종료, 새 소유자 실행 등록, 성공 분석 및 정상 저장 데이터 재사용 조건을 명시했다. 004의 후속 조회를 위해 최신 게시 배치 manifest 기준 선택 규칙을 반영했다. 테이블·컬럼·관계·제약은 승인된 개정 범위를 따른다. 문서 개정은 구현·마이그레이션 실행이나 성능 검증 완료를 의미하지 않는다.

@@ -877,15 +877,19 @@ COLLECTION_BATCH.publication_status:
 
 **가장 최근에 게시된 통합 배치**를 기준으로 조회한다.
 
+첫 요청에서 `publicationBatchId`를 생략하면 서버는 요청 시점의 최신 게시 배치를 선택하고 응답에 그 ID를 반환한다. 월간·반월을 별도 요청하는 클라이언트는 후속 요청마다 첫 응답의 `publicationBatchId`를 지정한다. 지정된 경우 서버는 해당 ID가 게시된 배치인지 확인하고 그 배치만 조회한다. ID가 유효하지 않거나 요청 Key가 그 배치의 manifest에 없으면 결과 없음으로 응답하며 최신 배치나 과거 Key로 자동 대체하지 않는다. 같은 화면의 월간·반월 요청은 이 규칙으로 하나의 게시 버전에 고정한다.
+
 ```sql
-WITH latest_batch AS (
-    SELECT id
+WITH selected_batch AS (
+    SELECT id, target_insight_keys
     FROM collection_batch
     WHERE publication_status = 'PUBLISHED'
+      AND (:publicationBatchId IS NULL OR id = :publicationBatchId)
     ORDER BY published_at DESC, id DESC
     LIMIT 1
 )
 SELECT
+    b.id AS publication_batch_id,
     s.id,
     s.batch_id,
     s.species_id,
@@ -894,16 +898,17 @@ SELECT
     s.output_payload,
     s.as_of
 FROM price_insight_snapshot s
-JOIN latest_batch b
+JOIN selected_batch b
   ON b.id = s.batch_id
 WHERE s.status = 'PUBLISHED'
   AND s.species_id = :speciesId
-  AND s.insight_key = :insightKey;
+  AND s.insight_key = :insightKey
+  AND (b.target_insight_keys->'keys') ? s.insight_key;
 ```
 
-동일 SQL 문 안에서 하나의 게시 배치를 선택하므로 응답에 서로 다른 게시 배치 결과가 혼합되지 않는다.
+`publicationBatchId`가 없으면 SQL이 최신 게시 배치를 선택한다. ID가 있으면 해당 게시 배치만 선택한다. manifest 포함 여부도 같은 조회에서 확인하므로 하나의 응답에 다른 배치 결과가 섞이지 않는다.
 
-프론트엔드가 월간과 반월을 별도로 요청할 경우, 같은 게시 버전을 유지할 수 있도록 API 응답에 `publicationBatchId`를 포함한다.
+API 응답에는 후속 조회에 사용할 `publicationBatchId`를 포함한다. 월간과 반월을 별도로 조회하는 경우 첫 응답을 받은 뒤 다음 요청에 해당 ID를 전달한다. 요청 ID를 생략한 별도 요청은 각각 최신 배치를 선택할 수 있으므로 같은 게시 버전이 필요한 조회에는 사용하지 않는다.
 
 **주의:** 위 SQL에서 `:insightKey`는 요청 시점의 달력 기간으로 새로 계산하지 않는다. 조회 기준인 최신 `PUBLISHED` 배치의 `target_insight_keys`에서 해당 어종·기간 유형에 대응하는 Key를 선택해야 한다. 오래된 Last Known Good 배치의 대상 기간과 오늘 날짜의 대상 기간은 다를 수 있기 때문이다.
 
@@ -1048,7 +1053,8 @@ public record PriceInsightResponse(
 | T23 | 취소된 Worker의 지연 응답             | 완료 및 게시 반영 차단                          |
 | T24 | 서버 프로세스 재시작                  | DB 상태 및 lease 기반 복구                      |
 | T25 | 이전 게시본의 기간과 오늘 날짜가 다름 | 게시 배치의 Key로 조회                          |
-| T26 | 동시에 월간·반월 API 조회             | 지정된 동일 publicationBatchId 기준 일관성 보장 |
+| T26 | 첫 조회 후 배치 ID를 지정해 월간·반월 별도 조회 | 새 배치가 게시되어도 같은 publicationBatchId 결과 유지 |
+| T27 | 지정 배치에 Key가 없거나 게시되지 않음 | 과거·최신 배치로 대체하지 않고 결과 없음       |
 
 PostgreSQL의 실제 잠금·트랜잭션·유일성 제약은 Testcontainers 기반 통합 테스트로 검증한다.
 
