@@ -110,6 +110,7 @@
 - [BE-TECH-SPEC-002-가격-데이터-모델링-및-산지-도매가격-산출.md](./MVP/architecture/backend/tech-spec/BE-TECH-SPEC-002-가격-데이터-모델링-및-산지-도매가격-산출.md)
 - [BE-TECH-SPEC-003-PDF-기사-수집-및-정보-추출.md](./MVP/architecture/backend/tech-spec/BE-TECH-SPEC-003-PDF-기사-수집-및-정보-추출.md)
 - [BE-TECH-SPEC-004-Price-Insight-생성-검증-게시.md](./MVP/architecture/backend/tech-spec/BE-TECH-SPEC-004-Price-Insight-생성-검증-게시.md)
+- [BE-TECH-SPEC-005-사용자-식별-인증-세션.md](./MVP/architecture/backend/tech-spec/BE-TECH-SPEC-005-사용자-식별-인증-세션.md) — **Draft, 연계 문서 동기화 중**
 
 백엔드 데이터 구조의 기준 ERD를 함께 확인한다.
 
