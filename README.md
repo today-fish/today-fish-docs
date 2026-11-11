@@ -92,7 +92,7 @@
 
 ### `MVP/architecture/backend/`
 
-백엔드 아키텍처의 기술 선택과 운영 원칙을 관리한다. ADR 요약과 미정 의사결정은 [README.md](./MVP/architecture/backend/README.md)를 확인한다.
+백엔드 아키텍처의 기술 선택과 운영 원칙을 관리한다. ADR 안내는 [README.md](./MVP/architecture/backend/README.md), Tech Spec별 상세 책임은 [tech-spec/README.md](./MVP/architecture/backend/tech-spec/README.md)를 확인한다.
 
 - [README.md](./MVP/architecture/backend/README.md)
 - [BE-ADR-001-백엔드-아키텍처.md](./MVP/architecture/backend/BE-ADR-001-백엔드-아키텍처.md)
@@ -104,15 +104,16 @@
 - [BE-ADR-007-가격수집-PDF-AI-파이프라인.md](./MVP/architecture/backend/BE-ADR-007-가격수집-PDF-AI-파이프라인.md)
 - [BE-ADR-008-AI-실행-아키텍처.md](./MVP/architecture/backend/BE-ADR-008-AI-실행-아키텍처.md)
 
-`tech-spec/`는 승인된 데이터 수집·정규화와 가격 모델링·산출 기준을 정의한다.
+`tech-spec/`는 승인된 백엔드 처리 기준을 정의한다. 문서별 책임 경계는 [안내 문서](./MVP/architecture/backend/tech-spec/README.md)를 따른다.
 
 - [BE-TECH-SPEC-001-데이터-수집-정규화-검증.md](./MVP/architecture/backend/tech-spec/BE-TECH-SPEC-001-데이터-수집-정규화-검증.md)
 - [BE-TECH-SPEC-002-가격-데이터-모델링-및-산지-도매가격-산출.md](./MVP/architecture/backend/tech-spec/BE-TECH-SPEC-002-가격-데이터-모델링-및-산지-도매가격-산출.md)
 - [BE-TECH-SPEC-003-PDF-기사-수집-및-정보-추출.md](./MVP/architecture/backend/tech-spec/BE-TECH-SPEC-003-PDF-기사-수집-및-정보-추출.md)
+- [BE-TECH-SPEC-004-Price-Insight-생성-검증-게시.md](./MVP/architecture/backend/tech-spec/BE-TECH-SPEC-004-Price-Insight-생성-검증-게시.md)
 
 백엔드 데이터 구조의 기준 ERD를 함께 확인한다.
 
-- [BE-ERD-001-통합-데이터-모델.md](./MVP/architecture/backend/erd/BE-ERD-001-통합-데이터-모델.md)
+- [BE-ERD-001-통합-데이터-모델.md](./MVP/architecture/backend/erd/BE-ERD-001-통합-데이터-모델.md) — 17개 논리 테이블 기준
 
 ### `design-system/`
 
