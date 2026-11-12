@@ -1,6 +1,6 @@
 # BE-TECH-SPEC-003 PDF 및 기사 수집과 정보 추출
 
-- **버전:** V1.1
+- **버전:** V1
 
 - **상태:** 승인
 
@@ -8,7 +8,7 @@
 
 - **대상:** 오늘의 수산 백엔드 MVP
 
-- **관련 문서:** [001 V1.1](BE-TECH-SPEC-001-데이터-수집-정규화-검증.md), [002 V1.1](BE-TECH-SPEC-002-가격-데이터-모델링-및-산지-도매가격-산출.md), [004 v0.2](BE-TECH-SPEC-004-Price-Insight-생성-검증-게시.md), [통합 ERD V1.1](../erd/BE-ERD-001-통합-데이터-모델.md)
+- **관련 문서:** [001 V1](BE-TECH-SPEC-001-데이터-수집-정규화-검증.md), [002 V1](BE-TECH-SPEC-002-가격-데이터-모델링-및-산지-도매가격-산출.md), [004 V1](BE-TECH-SPEC-004-Price-Insight-생성-검증-게시.md), [통합 ERD V1](../erd/BE-ERD-001-통합-데이터-모델.md)
 
 ## Summary
 
@@ -23,7 +23,7 @@ PDF와 기사 원본을 보존하고 Gemini 분석으로 관측 후보와 Eviden
 | 001  | 공통 수집·정규화·검증 계약                 |
 | 002  | 가격 집계와 입력 재현 계약                 |
 | 004  | Price Insight 입력·생성·검증·게시 계약     |
-| ERD  | 전체 17개 논리 테이블, 컬럼·관계·키·NULL·불변성 |
+| ERD  | V1.1 기준 17개 논리 테이블, 컬럼·관계·키·NULL·불변성 |
 
 001/002는 사용자가 제공한 Accepted v0.4/v0.5의 업무 정책을 유지하면서 승인 ERD로 통합한 V1.1을 참조한다. 본 문서는 기존 003 v0.2를 통합했다. ERD는 토큰 사용량 컬럼을 제거한 사용자 승인 모델을 유지한다. 초기 실행 수치·배포 설정은 §11의 구현 기본안이며 실측치가 아니다.
 
@@ -117,7 +117,13 @@ flowchart TD
 
 목록 탐색도 Request로 기록하고, 발견한 다운로드 Request를 고유키 기반으로 일괄 등록한다. 목록 Request를 성공 처리하는 트랜잭션에 자식 요청 등록을 포함해 장애 후 요청 유실을 막는다. 부모 자식 관계의 표시가 필요하면 `request_params`의 단계와 탐색 요청 ID를 사용하며 새 관계 테이블을 추가하지 않는다.
 
-Request의 SUCCEEDED는 원본 확보 성공이다. 분석 실패 때문에 원본을 다시 다운로드하지 않는다. Job 종료 집계에는 그 Job의 Source에 연결된 AnalysisRun도 포함한다. 배치 실행 기한 내 완료되지 않은 재시도 작업은 현재 실행에서 최종 상태로 정리한다. 이번 Job/Batch는 성공 결과가 있으면 PARTIAL_SUCCESS, 없으면 FAILED로 종료한다. 다음 일일 통합 배치가 이전 배치를 `CANCELLED` 처리하면 해당 배치의 미완료 Request는 재실행하지 않고 미완료 AnalysisRun은 `CANCELLED`로 종료해 같은 행을 재실행하지 않는다. 이미 정상 저장된 Source·Observation·Evidence와 성공한 동일 설정의 분석 결과는 다음 배치에서 재사용한다. 새 AnalysisRun은 같은 설정의 이전 실행이 없거나 상위 배치 취소로 이전 실행이 `CANCELLED`된 경우에만 새 배치 소유로 등록한다. 결과 반영 시 부모 배치 상태와 현재 lease 소유권을 확인한다.
+Request의 SUCCEEDED는 원본 확보 성공이다. 분석 실패 때문에 원본을 다시 다운로드하지 않는다. Job 종료 집계에는 그 Job의 Source에 연결된 AnalysisRun도 포함한다.
+
+배치 실행 기한 내 완료되지 않은 재시도 작업은 현재 실행에서 최종 상태로 정리한다. 이번 Job/Batch는 성공 결과가 있으면 PARTIAL_SUCCESS, 없으면 FAILED로 종료한다. 다음 일일 통합 배치가 이전 배치를 `CANCELLED` 처리하면 해당 배치의 미완료 Request는 재실행하지 않고 미완료 AnalysisRun은 `CANCELLED`로 종료해 같은 행을 재실행하지 않는다.
+
+이미 정상 저장된 Source·Observation·Evidence와 성공한 동일 설정의 분석 결과는 다음 배치에서 재사용한다. 새 AnalysisRun은 같은 설정의 이전 실행이 없거나 상위 배치 취소로 이전 실행이 `CANCELLED`된 경우에만 새 배치 소유로 등록한다.
+
+결과 반영 시 부모 배치 상태와 현재 lease 소유권을 확인한다.
 
 ## 4 모듈과 구현 계약
 
@@ -240,7 +246,9 @@ public record InsightEvidenceInput(
 
 R2와 PostgreSQL은 하나의 원자 트랜잭션이 아니다. R2 성공 후 DB 실패는 동일 객체 키로 재연결하며, DB에서 참조하지 않는 객체는 일정 유예 후 재조정한다. 유예 시간과 삭제 권한은 운영 설정으로 정한다. DB 실패 직후 원본을 즉시 삭제하지 않는다.
 
-R2는 장기 원본 저장소다. 공급자 업로드 파일의 URI는 일시 참조이며 원본 `content_ref`를 대체하지 않는다. 만료되면 보존한 원본에서 다시 업로드한다. 직접 PDF 입력과 파일 전달 방식은 [Gemini 문서 이해 공식 문서](https://ai.google.dev/gemini-api/docs/document-processing?hl=en)에 따라 어댑터가 구현한다. 실제 모델·방식별 제한은 배포 시 확인한다.
+R2는 장기 원본 저장소다. 공급자 업로드 파일의 URI는 일시 참조이며 원본 `content_ref`를 대체하지 않는다. 만료되면 보존한 원본에서 다시 업로드한다. 직접 PDF 입력과 파일 전달 방식은 [Gemini 문서 이해 공식 문서](https://ai.google.dev/gemini-api/docs/document-processing?hl=en)에 따라 어댑터가 구현한다.
+
+실제 모델·방식별 제한은 배포 시 확인한다.
 
 ### 5.2 기사
 
@@ -379,9 +387,21 @@ Observation.dedupe_fingerprint =
 
 ```
 
-`execution_owner_id`는 PDF의 경우 현재 실행의 COLLECTION_BATCH ID, 뉴스의 경우 현재 DOCUMENT_EXTRACTION_BATCH ID다. `owner_kind`와 `execution_owner_id`를 키 앞부분에 보존해 Worker가 실행 소유자와 부모 배치를 다시 확인할 수 있게 하며, 두 값을 해시에도 포함해 소유자 간 유일성을 보장한다. 뉴스는 `extraction_batch_id`와 키의 소유자 ID가 일치해야 한다. H는 타입·키 순서·날짜·숫자·NULL 규약을 고정한 정규 표현의 SHA-256이다. URL만으로 문서 버전을 판단하거나 모든 빈 API 응답의 같은 해시를 하나의 출처로 합치지 않는다. 서로 다른 원천의 동일 바이트는 저장 객체를 공유할 수 있지만 원천 식별 정보까지 무조건 병합하지 않는다.
+`execution_owner_id`는 PDF의 경우 현재 실행의 COLLECTION_BATCH ID, 뉴스의 경우 현재 DOCUMENT_EXTRACTION_BATCH ID다. `owner_kind`와 `execution_owner_id`를 키 앞부분에 보존해 Worker가 실행 소유자와 부모 배치를 다시 확인할 수 있게 하며, 두 값을 해시에도 포함해 소유자 간 유일성을 보장한다.
 
-성공 결과 재사용은 idempotency_key와 분리한다. 같은 Source·내용 해시·모델·프롬프트·스키마의 SUCCEEDED AnalysisRun이 있으면 그 결과와 저장된 Observation·Evidence를 재사용하고 새 실행을 만들지 않는다. 이는 별도 컬럼이나 유일 키가 아니라 기존 행을 조회하는 기준이다. 같은 배치·같은 소유자·같은 설정의 재등록은 기존 실행을 찾는다. 새 배치 소유의 새 AnalysisRun은 이전 실행이 없거나, 이전 실행이 상위 배치 취소로 `CANCELLED`된 경우에 등록한다. `REVIEW`와 `FAILED_PERMANENT`는 기존 오류 처리 정책에 따라 자동 재실행하지 않는다. 뉴스 실행은 새 배치의 DOCUMENT_EXTRACTION_BATCH를 extraction_batch_id로 참조한다. 취소된 이전 실행 행 자체는 재실행하지 않는다. 모델/프롬프트/스키마가 달라지면 새 분석이다. 정규화 규칙만 바뀌면 기존 성공 응답을 다시 매핑해 새 관측 버전을 만들 수 있으며 불필요한 AI 재호출을 하지 않는다. 같은 실행의 실패는 정책에 따른 제한 재시도로 처리한다. SDK 내부 재시도는 기본 비활성화하거나 외부 정책과 합산하여 최대 호출 수를 넘지 않게 한다.
+뉴스는 `extraction_batch_id`와 키의 소유자 ID가 일치해야 한다. H는 타입·키 순서·날짜·숫자·NULL 규약을 고정한 정규 표현의 SHA-256이다. URL만으로 문서 버전을 판단하거나 모든 빈 API 응답의 같은 해시를 하나의 출처로 합치지 않는다.
+
+서로 다른 원천의 동일 바이트는 저장 객체를 공유할 수 있지만 원천 식별 정보까지 무조건 병합하지 않는다.
+
+성공 결과 재사용은 idempotency_key와 분리한다. 같은 Source·내용 해시·모델·프롬프트·스키마의 SUCCEEDED AnalysisRun이 있으면 그 결과와 저장된 Observation·Evidence를 재사용하고 새 실행을 만들지 않는다.
+
+이는 별도 컬럼이나 유일 키가 아니라 기존 행을 조회하는 기준이다. 같은 배치·같은 소유자·같은 설정의 재등록은 기존 실행을 찾는다. 새 배치 소유의 새 AnalysisRun은 이전 실행이 없거나, 이전 실행이 상위 배치 취소로 `CANCELLED`된 경우에 등록한다.
+
+`REVIEW`와 `FAILED_PERMANENT`는 기존 오류 처리 정책에 따라 자동 재실행하지 않는다. 뉴스 실행은 새 배치의 DOCUMENT_EXTRACTION_BATCH를 extraction_batch_id로 참조한다.
+
+취소된 이전 실행 행 자체는 재실행하지 않는다. 모델/프롬프트/스키마가 달라지면 새 분석이다. 정규화 규칙만 바뀌면 기존 성공 응답을 다시 매핑해 새 관측 버전을 만들 수 있으며 불필요한 AI 재호출을 하지 않는다.
+
+같은 실행의 실패는 정책에 따른 제한 재시도로 처리한다. SDK 내부 재시도는 기본 비활성화하거나 외부 정책과 합산하여 최대 호출 수를 넘지 않게 한다.
 
 ### 7.2 가격 표본 독립성
 
@@ -418,7 +438,15 @@ Observation.dedupe_fingerprint =
 
 외부 HTTP·R2·공급자 업로드·Gemini 생성·재시도 대기는 이 트랜잭션 밖에서 수행한다. 다운로드와 분석의 결과 크기는 설정으로 제한하고 한 문서의 결과 반영은 원자적으로 완료한다. 분석 성공 반영이 실패하면 SUCCEEDED만 먼저 기록하지 않는다.
 
-결과 반영 시 실행 소유자를 `idempotency_key`에서 확인하고 해당 부모 배치가 활성 상태인지, RUNNING·현재 lease_token·유효 lease를 확인한다. 뉴스는 `extraction_batch_id`가 같은 부모 배치에 속하며 활성 상태인지도 확인한다. 어느 조건이든 충족하지 않으면 지연 결과를 저장하지 않는다. 처리에 긴 시간이 필요하면 같은 토큰으로 lease를 연장하되, 연장 실패 후에는 결과를 반영하지 않는다. 만료된 작업을 현재 활성 배치 안에서 회수할 때 새 토큰을 발급하고 이전 실행의 응답은 차단한다. 배치 취소 트랜잭션은 PENDING·RUNNING·RETRY_PENDING AnalysisRun 및 PENDING·RUNNING ExtractionBatch를 CANCELLED로 전이하고 error_code를 `PARENT_BATCH_CANCELLED`로 기록하며, AnalysisRun의 lease_token·lease_until·next_attempt_at을 비워 늦은 결과와 재점유를 차단한다. 취소된 AnalysisRun 행은 재실행하지 않는다. 다음 배치는 SUCCEEDED 결과를 재사용하고, 같은 설정의 이전 실행이 없거나 상위 배치 취소로 이전 실행이 CANCELLED된 경우에만 새 실행 소유자의 멱등 키로 새 AnalysisRun을 등록한다. REVIEW·FAILED_PERMANENT는 자동 재실행하지 않는다. 외부 API 정확히 한 번 호출은 보장하지 않으며, 고유키와 점유 검증으로 DB 중복 반영을 방지한다.
+결과 반영 시 실행 소유자를 `idempotency_key`에서 확인하고 해당 부모 배치가 활성 상태인지, RUNNING·현재 lease_token·유효 lease를 확인한다. 뉴스는 `extraction_batch_id`가 같은 부모 배치에 속하며 활성 상태인지도 확인한다.
+
+어느 조건이든 충족하지 않으면 지연 결과를 저장하지 않는다. 처리에 긴 시간이 필요하면 같은 토큰으로 lease를 연장하되, 연장 실패 후에는 결과를 반영하지 않는다. 만료된 작업을 현재 활성 배치 안에서 회수할 때 새 토큰을 발급하고 이전 실행의 응답은 차단한다.
+
+배치 취소 트랜잭션은 PENDING·RUNNING·RETRY_PENDING AnalysisRun 및 PENDING·RUNNING ExtractionBatch를 CANCELLED로 전이하고 error_code를 `PARENT_BATCH_CANCELLED`로 기록하며, AnalysisRun의 lease_token·lease_until·next_attempt_at을 비워 늦은 결과와 재점유를 차단한다.
+
+취소된 AnalysisRun 행은 재실행하지 않는다. 다음 배치는 SUCCEEDED 결과를 재사용하고, 같은 설정의 이전 실행이 없거나 상위 배치 취소로 이전 실행이 CANCELLED된 경우에만 새 실행 소유자의 멱등 키로 새 AnalysisRun을 등록한다.
+
+REVIEW·FAILED_PERMANENT는 자동 재실행하지 않는다. 외부 API 정확히 한 번 호출은 보장하지 않으며, 고유키와 점유 검증으로 DB 중복 반영을 방지한다.
 
 ## 9 가격과 PriceInsight 연계
 
@@ -426,7 +454,9 @@ Observation.dedupe_fingerprint =
 
 003은 원문 수치·단위·상품 조건·기간·독립성과 근거를 검증하고 표준가격을 준비한다. 집계의 기준 원천과 비교 조건은 002가 결정한다. 산지와 도매, 기관과 데이터셋이 다른 값을 임의로 합치지 않는다. KMI pc=0·GROUP 매핑·독립성 미확인·단위 불명확·REVIEW_REQUIRED/INVALID 값은 자동 집계 적격으로 만들지 않는다.
 
-002 V1의 `price-aggregation-v2`는 날짜별 1~4건 중앙값, 5건 이상 최고·최저 각 1건 절사평균 후 유효 일별 가격의 기간 단순평균이다. 누락일은 제외하고 원본 관측 건수로 가중하지 않는다. `observation_count`는 절사 전 원본 수, `excluded_count`는 일별 절사 합계, `observed_day_count`는 기간 평균 분모다. 이 규칙을 본 문서에서 변경하지 않는다.
+002 V1의 `price-aggregation-v2`는 날짜별 1~4건 중앙값, 5건 이상 최고·최저 각 1건 절사평균 후 유효 일별 가격의 기간 단순평균이다. 누락일은 제외하고 원본 관측 건수로 가중하지 않는다.
+
+`observation_count`는 절사 전 원본 수, `excluded_count`는 일별 절사 합계, `observed_day_count`는 기간 평균 분모다. 이 규칙을 본 문서에서 변경하지 않는다.
 
 PERIOD_PRICE_INPUT은 적격 가격 관측 중 INCLUDED/TRIMMED_MIN/TRIMMED_MAX를 모두 보존한다. 가격 버전과 연결 입력은 고정하며 새 계산은 새 ID를 사용한다. FK 대상은 PRICE_OBSERVATION(observation_id)이다.
 
@@ -440,7 +470,7 @@ PERIOD_PRICE_INPUT은 적격 가격 관측 중 INCLUDED/TRIMMED_MIN/TRIMMED_MAX�
 
 ### 10.1 승인 ERD 적용
 
-전체 테이블·컬럼의 기준은 [통합 ERD V1.1](../erd/BE-ERD-001-통합-데이터-모델.md)이다. 아래는 003이 사용하는 관계와 주요 컬럼의 발췌이며, 공통 테이블의 별도 복제 모델이 아니다.
+전체 테이블·컬럼의 기준은 [통합 ERD V1](../erd/BE-ERD-001-통합-데이터-모델.md)이다. 아래는 003이 사용하는 관계와 주요 컬럼의 발췌이며, 공통 테이블의 별도 복제 모델이 아니다.
 
 ```mermaid
 
@@ -845,9 +875,13 @@ ai:
 
 ### 11.3 토큰 컬럼 제거와 호출 제한
 
-승인 ERD에는 `input_tokens`, `output_tokens` 및 기타 토큰 사용량 영속 컬럼이 없다. Entity·업무 영속 DTO·마이그레이션에 이를 다시 추가하지 않는다. `response_ref`는 검증에 필요한 출력·완료 사유·버전·추적 정보를 보존하기 위한 참조다. 공급자 usage 메타데이터가 응답에 포함되어도 별도 업무 컬럼으로 옮기지 않는다. 필요하면 공급자 운영 대시보드 또는 접근을 제한한 운영 로그에서 선택적으로 확인한다.
+승인 ERD에는 `input_tokens`, `output_tokens` 및 기타 토큰 사용량 영속 컬럼이 없다. Entity·업무 영속 DTO·마이그레이션에 이를 다시 추가하지 않는다. `response_ref`는 검증에 필요한 출력·완료 사유·버전·추적 정보를 보존하기 위한 참조다.
 
-토큰 컬럼 제거가 공급자 제한 제거를 의미하지는 않는다. 문서·기사·Insight가 공유하는 프로젝트/모델 단위로 동시 실행·호출 간격·입출력 상한·429 backoff를 적용한다. Gemini의 한도는 API 키별 독립 예산으로 간주하지 않으며 실제 프로젝트 설정을 확인한다. [Gemini 호출 제한 공식 문서](https://ai.google.dev/gemini-api/docs/rate-limits?hl=en)
+공급자 usage 메타데이터가 응답에 포함되어도 별도 업무 컬럼으로 옮기지 않는다. 필요하면 공급자 운영 대시보드 또는 접근을 제한한 운영 로그에서 선택적으로 확인한다.
+
+토큰 컬럼 제거가 공급자 제한 제거를 의미하지는 않는다. 문서·기사·Insight가 공유하는 프로젝트/모델 단위로 동시 실행·호출 간격·입출력 상한·429 backoff를 적용한다. Gemini의 한도는 API 키별 독립 예산으로 간주하지 않으며 실제 프로젝트 설정을 확인한다.
+
+[Gemini 호출 제한 공식 문서](https://ai.google.dev/gemini-api/docs/rate-limits?hl=en)
 
 MVP는 단일 실행 인스턴스를 기본으로 한다. 필요 시 요청 크기 추정치는 메모리에서만 사용하고 재시작 후 잔여 할당량이 복원됐다고 가정하지 않는다. 공급자 제한 응답과 다음 가능 시각을 따르며 미확인 상태에서 무한 재호출하지 않는다. 정확한 영속 예산 예약·복원이 필요한 규모로 확대되면 별도 실행 설계 변경으로 다룬다. 외부 로그를 DB의 정확한 예산 장부로 취급하지 않는다.
 
@@ -857,7 +891,13 @@ MVP는 단일 실행 인스턴스를 기본으로 한다. 필요 시 요청 크�
 
 확인할 지표는 원천별 발견/보존/분석 성공·실패 수, 정상 0건, 정책 제외, 큐 대기·처리 시간, 재시도·429, lease 회수, REVIEW/INVALID, 중복 차단, R2 미참조 객체, 문서별 추출 결과와 부분 실패 수다. 지표는 관측 시스템에서 관리하며 승인 ERD에 통계 컬럼을 추가하지 않는다.
 
-현재 배치 실행 중에는 만료된 RUNNING 작업을 회수해 제한된 재시도를 수행한다. 배치 실행 기한 내 완료되지 않은 재시도 작업은 현재 실행에서 최종 상태로 정리한다. 새 일일 통합 배치가 시작되면 이전 배치를 취소하는 트랜잭션에서 미완료 AnalysisRun과 활성 DOCUMENT_EXTRACTION_BATCH를 `CANCELLED`로 전이하고 lease를 무효화한다. 이전 AnalysisRun 행은 재실행하지 않는다. 다음 배치는 정상 저장된 Source·Observation·Evidence를 재사용하고 같은 설정의 성공 AnalysisRun이 있으면 해당 결과를 재사용한다. 이전 실행이 없거나 상위 배치 취소로 CANCELLED된 경우에만 PDF는 새 CollectionBatch 소유 키, 뉴스는 새 DOCUMENT_EXTRACTION_BATCH 소유 키로 별도 AnalysisRun을 등록한다. REVIEW·FAILED_PERMANENT는 자동 재실행하지 않는다. 결과 반영 시 부모 배치 상태와 현재 lease 소유권을 확인하므로 취소된 실행의 늦은 응답은 저장하지 않는다. R2·DB 불일치는 해시와 참조를 기준으로 조정한다.
+현재 배치 실행 중에는 만료된 RUNNING 작업을 회수해 제한된 재시도를 수행한다. 배치 실행 기한 내 완료되지 않은 재시도 작업은 현재 실행에서 최종 상태로 정리한다. 새 일일 통합 배치가 시작되면 이전 배치를 취소하는 트랜잭션에서 미완료 AnalysisRun과 활성 DOCUMENT_EXTRACTION_BATCH를 `CANCELLED`로 전이하고 lease를 무효화한다.
+
+이전 AnalysisRun 행은 재실행하지 않는다. 다음 배치는 정상 저장된 Source·Observation·Evidence를 재사용하고 같은 설정의 성공 AnalysisRun이 있으면 해당 결과를 재사용한다.
+
+이전 실행이 없거나 상위 배치 취소로 CANCELLED된 경우에만 PDF는 새 CollectionBatch 소유 키, 뉴스는 새 DOCUMENT_EXTRACTION_BATCH 소유 키로 별도 AnalysisRun을 등록한다.
+
+REVIEW·FAILED_PERMANENT는 자동 재실행하지 않는다. 결과 반영 시 부모 배치 상태와 현재 lease 소유권을 확인하므로 취소된 실행의 늦은 응답은 저장하지 않는다. R2·DB 불일치는 해시와 참조를 기준으로 조정한다.
 
 ## 12 구현 인수 기준
 
@@ -888,4 +928,8 @@ MVP는 단일 실행 인스턴스를 기본으로 한다. 필요 시 요청 크�
 
 배포 전 원천별 저장·AI 전송 권한, 모델 실제 ID와 지원 전달 방식, 계정 호출 제한, 크기·페이지·배열·본문 상한, timeout·lease·재시도 시간 예산, 원문 보존 기간을 확인한다. PoC의 성공률·지연·비용을 운영 보장으로 사용하지 않는다.
 
-V1.1은 003 v0.2를 통합 ERD V1.1 및 승인된 004와 정합시킨 기준본이다. 배치 취소 시 기존 미완료 AnalysisRun을 종료하고 새 배치 소유 실행으로 이어가는 멱등 키와 재사용 기준을 명시한다. 제거한 원천 상세·R2 객체·모델 예산·사용량 이벤트·Insight 입력 관계 테이블을 다시 도입하지 않는다. Insight 생성·검증·게시 정책은 004가 소유한다. Source metadata, 문서 실행, 관측과 Evidence 연결, 검증 이슈는 본 문서와 ERD의 계약을 따른다. 토큰 사용량 컬럼은 제외한다. 기존 001·002의 후속 개정 목록은 각 문서에 반영한다.
+V1.1은 003 v0.2를 통합 ERD V1.1 및 승인된 004와 정합시킨 기준본이다. 배치 취소 시 기존 미완료 AnalysisRun을 종료하고 새 배치 소유 실행으로 이어가는 멱등 키와 재사용 기준을 명시한다.
+
+제거한 원천 상세·R2 객체·모델 예산·사용량 이벤트·Insight 입력 관계 테이블을 다시 도입하지 않는다. Insight 생성·검증·게시 정책은 004가 소유한다. Source metadata, 문서 실행, 관측과 Evidence 연결, 검증 이슈는 본 문서와 ERD의 계약을 따른다.
+
+토큰 사용량 컬럼은 제외한다. 기존 001·002의 후속 개정 목록은 각 문서에 반영한다.

@@ -1,10 +1,10 @@
 # BE-TECH-SPEC-001 데이터 수집 정규화 검증
 
-- **버전:** V1.1
+- **버전:** V1
 - **상태:** 승인
 - **기준일:** 2026-11-11
 - **기존 정책 기준:** 사용자 제공 BE-TECH-SPEC-001 v0.4 Accepted
-- **관련 문서:** [002 V1.1](BE-TECH-SPEC-002-가격-데이터-모델링-및-산지-도매가격-산출.md), [003 V1.1](BE-TECH-SPEC-003-PDF-기사-수집-및-정보-추출.md), [004 v0.2](BE-TECH-SPEC-004-Price-Insight-생성-검증-게시.md), [통합 ERD V1.1](../erd/BE-ERD-001-통합-데이터-모델.md)
+- **관련 문서:** [002 V1](BE-TECH-SPEC-002-가격-데이터-모델링-및-산지-도매가격-산출.md), [003 V1](BE-TECH-SPEC-003-PDF-기사-수집-및-정보-추출.md), [004 V1](BE-TECH-SPEC-004-Price-Insight-생성-검증-게시.md), [통합 ERD V1](../erd/BE-ERD-001-통합-데이터-모델.md)
 
 ## 1 목적과 책임
 
@@ -120,7 +120,11 @@ EXACT는 정확 대응, GROUP은 상품군 대응이다. GROUP 매핑만으로 �
 
 content_hash는 원본 바이트 또는 규약으로 고정한 원본 표현의 SHA-256이다. source_key에는 기관·데이터셋·품목·날짜·페이지 등 실제 요청 범위를 포함한다. 서로 다른 요청의 빈 응답 해시가 같다는 이유로 출처를 하나로 합치지 않는다. URL만 같고 내용이 달라지면 새 Source 버전이다.
 
-Source.metadata는 유형별 JSONB 계약을 사용한다. API에는 schema_version, 실제 요청 조건, 응답 형식, 페이지 정보, 해시 규약 버전과 제공기관 원천 식별 정보를 보존한다. 제공기관 응답에 실제 데이터 기준시각이 포함되면 이 metadata에 보존한다. 정기 작업의 dataset은 Job이 소유하고, 실제 호출 조건은 원본 재현에 필요한 스냅샷으로 metadata에 기록할 수 있다. 권한·본문·파일 규약은 003과 같은 Source 저장 경계를 사용한다.
+Source.metadata는 유형별 JSONB 계약을 사용한다. API에는 schema_version, 실제 요청 조건, 응답 형식, 페이지 정보, 해시 규약 버전과 제공기관 원천 식별 정보를 보존한다.
+
+제공기관 응답에 실제 데이터 기준시각이 포함되면 이 metadata에 보존한다. 정기 작업의 dataset은 Job이 소유하고, 실제 호출 조건은 원본 재현에 필요한 스냅샷으로 metadata에 기록할 수 있다.
+
+권한·본문·파일 규약은 003과 같은 Source 저장 경계를 사용한다.
 
 정상 0건은 Request.NO_DATA로 기록하고, 확보한 빈 원본 응답도 재현 가능하게 보존한다. 0건을 가격 0원이나 기존 관측 삭제로 변환하지 않는다. 원본은 수집됐으나 유효 관측이 없는 경우 수집 성공과 관측 검토/무효 상태를 구분한다.
 
@@ -130,7 +134,9 @@ NORMALIZED_OBSERVATION은 원본·어종·유형·기간·추출 방식·위치�
 
 observation_type은 PRICE/TRADE 등 관측 내용을, extraction_method는 API_MAPPING/PARSER/AI_EXTRACTION을 구분한다. 관측 기간과 게시·수집 시각을 혼용하지 않는다. 승인 모델에 없는 수급 지표를 거래량으로 바꾸지 않으며, 해당 주장은 003의 Evidence와 원본 응답에 보존한다.
 
-API 관측의 analysis_run_id와 API Evidence의 analysis_run_id는 NULL이다. Evidence.source_locator에는 원본 행 키·JSON 경로·단위 필드 등 수치를 확인할 위치를 남긴다. quote는 해당 원천 값을 확인할 수 있는 응답 발췌다. 검증된 관측에는 하나 이상의 SUPPORTS_VALUE 연결이 있어야 한다. 변동 설명과 일반 맥락은 EXPLAINS_CHANGE/CONTEXT로 구분한다.
+API 관측의 analysis_run_id와 API Evidence의 analysis_run_id는 NULL이다. Evidence.source_locator에는 원본 행 키·JSON 경로·단위 필드 등 수치를 확인할 위치를 남긴다.
+
+quote는 해당 원천 값을 확인할 수 있는 응답 발췌다. 검증된 관측에는 하나 이상의 SUPPORTS_VALUE 연결이 있어야 한다. 변동 설명과 일반 맥락은 EXPLAINS_CHANGE/CONTEXT로 구분한다.
 
 ### 6.1 저장 중복과 독립 표본
 
@@ -170,7 +176,13 @@ VALID는 기본 유효성 판정이다. 집계할 가격 단계·기준 원천·
 | AnalysisRun          | PENDING → RUNNING → SUCCEEDED             | RETRY_PENDING → RUNNING, REVIEW, FAILED_PERMANENT, CANCELLED  |
 | PriceInsightSnapshot | 004의 상태·전이 정책 적용                 | 생성·검증·게시 상태는 004에서 관리                            |
 
-Batch/Job은 해당 실행 창의 요약이며 기존 SUCCEEDED·PARTIAL_SUCCESS 의미는 유지한다. 새 일일 통합 배치가 시작될 때 이전 미완료 배치는 `CANCELLED`로 처리한다. 취소된 배치의 Request는 다음 배치에서 재실행하지 않는다. 미완료 AnalysisRun은 `CANCELLED` 처리하고 같은 행은 재실행하지 않는다. 다음 배치는 성공한 동일 설정 분석을 재사용하며, 기존 실행이 없거나 이전 실행이 상위 배치 취소로 `CANCELLED`된 경우에만 정상 Source·Observation·Evidence를 기반으로 새 배치 소유의 AnalysisRun을 등록한다. `REVIEW`·`FAILED_PERMANENT` 실행은 자동 재실행하지 않는다. 정상 0건만 있는 작업은 실패가 아니다. Request 성공 뒤 문서 분석이 실패해도 원본 수집 성공을 취소하지 않는다. 실행 상태와 별도인 `publication_status`는 ERD와 004의 정책을 따른다.
+Batch/Job은 해당 실행 창의 요약이며 기존 SUCCEEDED·PARTIAL_SUCCESS 의미는 유지한다. 새 일일 통합 배치가 시작될 때 이전 미완료 배치는 `CANCELLED`로 처리한다.
+
+취소된 배치의 Request는 다음 배치에서 재실행하지 않는다. 미완료 AnalysisRun은 `CANCELLED` 처리하고 같은 행은 재실행하지 않는다. 다음 배치는 성공한 동일 설정 분석을 재사용하며, 기존 실행이 없거나 이전 실행이 상위 배치 취소로 `CANCELLED`된 경우에만 정상 Source·Observation·Evidence를 기반으로 새 배치 소유의 AnalysisRun을 등록한다.
+
+`REVIEW`·`FAILED_PERMANENT` 실행은 자동 재실행하지 않는다. 정상 0건만 있는 작업은 실패가 아니다. Request 성공 뒤 문서 분석이 실패해도 원본 수집 성공을 취소하지 않는다.
+
+실행 상태와 별도인 `publication_status`는 ERD와 004의 정책을 따른다.
 
 | 트랜잭션   | 함께 반영할 작업                                  |
 | ---------- | ------------------------------------------------- |

@@ -1,27 +1,32 @@
 # BE-ERD-001 통합 데이터 모델
 
-- **버전:** V1.1
+- **버전:** V1
 
-- **상태:** V1.1 개정본 — 승인된 Price Insight 게시 계약 반영
+- **상태:** 승인(Accepted)
 
 - **기준일:** 2026-11-11
 
-- **승인 기준:** V1 기준 모델과 BE-TECH-SPEC-004 v0.2 합의 사항
+- **승인일:** 2026-11-12
 
-- **테이블:** 17개
+- **승인 기준:** BE-TECH-SPEC-001~006의 확정 데이터 모델
 
-- **관련 문서:** [001 V1.1](../tech-spec/BE-TECH-SPEC-001-데이터-수집-정규화-검증.md), [002 V1.1](../tech-spec/BE-TECH-SPEC-002-가격-데이터-모델링-및-산지-도매가격-산출.md), [003 V1.1](../tech-spec/BE-TECH-SPEC-003-PDF-기사-수집-및-정보-추출.md), [004 v0.2](../tech-spec/BE-TECH-SPEC-004-Price-Insight-생성-검증-게시.md)
+- **테이블:** 18개
+
+- **관련 문서:** [001 V1](../tech-spec/BE-TECH-SPEC-001-데이터-수집-정규화-검증.md), [002 V1](../tech-spec/BE-TECH-SPEC-002-가격-데이터-모델링-및-산지-도매가격-산출.md), [003 V1](../tech-spec/BE-TECH-SPEC-003-PDF-기사-수집-및-정보-추출.md), [004 V1](../tech-spec/BE-TECH-SPEC-004-Price-Insight-생성-검증-게시.md), [005 V1](../tech-spec/BE-TECH-SPEC-005-사용자-식별-인증-세션.md), [006 V1](../tech-spec/BE-TECH-SPEC-006-실시간-채팅.md)
 
 ## 1 목적과 관리 기준
 
-하나의 통합 Batch에 여러 Job과 문서 추출 Batch를 두고 원본·관측값·근거 및 Price Insight 게시 스냅샷을 연결한다. 관측값은 여러 Evidence로 뒷받침할 수 있으며, 관측 없는 정성 근거도 어종별로 보존한다. Price Insight 생성·검증·원자 게시 정책은 BE-TECH-SPEC-004를 따른다. 게시 대상은 통합 배치 시작 시 고정하고 전체 대상의 검증 성공 시 함께 전환한다.
+하나의 통합 Batch에 여러 Job과 문서 추출 Batch를 두고 원본·관측값·근거 및 Price Insight 게시 스냅샷을 연결한다. 관측값은 여러 Evidence로 뒷받침할 수 있으며, 관측 없는 정성 근거도 어종별로 보존한다.
 
-본 문서는 네 문서의 테이블·컬럼·관계 기준이다. Tech Spec의 발췌 모델은 별도 테이블 정의가 아니다. 전체 구조는 기존 승인 모델과 같고 토큰 사용량 컬럼은 없다. 문서의 V1 버전과 가격 정책 price-aggregation-v2는 서로 다른 식별자다.
+Price Insight 생성·검증·원자 게시 정책은 BE-TECH-SPEC-004를 따른다. 게시 대상은 통합 배치 시작 시 고정하고 전체 대상의 검증 성공 시 함께 전환한다.
+
+본 문서는 Tech Spec 001~006의 영속 테이블·컬럼·관계 기준이다. Tech Spec의 발췌 모델은 별도 테이블 정의가 아니다. 전체 구조는 기존 승인 모델과 같고 토큰 사용량 컬럼은 없다. 문서의 V1 버전과 가격 정책 price-aggregation-v2는 서로 다른 식별자다.
 
 ## 2 테이블별 주요 명세
 
 | 주요 명세                                | 테이블                                                                                                         |
 | ---------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| 005 익명 사용자 | APP_USER |
 | 001 공통 실행                            | COLLECTION_BATCH, COLLECTION_JOB, COLLECTION_REQUEST, COLLECTED_SOURCE                                         |
 | 001 어종과 관측                          | SPECIES, SPECIES_EXTERNAL_CODE, NORMALIZED_OBSERVATION, PRICE_OBSERVATION, TRADE_OBSERVATION, VALIDATION_ISSUE |
 | 002 가격 집계                            | PERIOD_PRICE, PERIOD_PRICE_INPUT                                                                               |
@@ -38,6 +43,11 @@ Mermaid의 datetime은 논리 시각 타입이며 물리 저장은 시간대가 
 erDiagram
 
     direction TB
+
+    APP_USER {
+        bigint id PK "익명 사용자 ID"
+        datetime created_at "최초 생성 시각"
+    }
 
     %% 001 배치와 공통 수집 및 정규화
 
@@ -491,6 +501,8 @@ erDiagram
 
 ## 4 키와 멱등성
 
+`APP_USER.id`는 BIGINT IDENTITY 기본키이며 `created_at`은 NOT NULL, 기본값은 현재 시각인 TIMESTAMPTZ다. APP_USER는 가격·수집·Insight 테이블에 FK를 두지 않는다. 채팅 참여자 세션과 메시지는 서버 메모리 상태이며 영속 테이블이 아니다.
+
 | 대상     | 키와 의미                                                                                      |
 | -------- | ---------------------------------------------------------------------------------------------- |
 | Batch    | execution_key: 스케줄·예정 회차·실행 목적                                                      |
@@ -567,7 +579,7 @@ input_payload는 실제 입력 관측 버전과 값·단위·기간·상태, 기
 
 변경 판단은 최신 PUBLISHED와 비교한다. 같은 입력의 대기/실패 작업이 있으면 새 작업을 무한 생성하지 않고 기존 작업의 고정 입력·정책으로 재시도한다. 생성·검증 실패 시 이전 게시본을 유지하고 마지막 실제 데이터 기준시각을 보존한다. 기존 게시본이 없고 유효 가격이 없으면 파악 중으로 처리한다.
 
-게시 조회는 먼저 `publication_status=PUBLISHED`인 COLLECTION_BATCH 중 `published_at DESC, id DESC` 순서로 최신 배치 하나를 선택한다. 요청 Key가 해당 배치의 `target_insight_keys` manifest에 포함된 경우에만 그 배치의 `(batch_id, insight_key)` Snapshot 중 PUBLISHED 결과를 조회한다. Key가 manifest에 없거나 해당 배치에 게시된 Snapshot이 없으면 과거 배치에서 같은 `insight_key`를 찾아 대체하지 않고 결과가 없는 것으로 처리한다. 따라서 기간이 바뀌어 새 manifest에서 빠진 과거 기간의 Snapshot은 현재 게시 결과로 반환되지 않는다. 화면의 가격 차트와 설명은 같은 게시 배치의 스냅샷·가격 버전·기준을 사용한다. 하나의 배치에서 모든 대상이 검증을 통과해야 전체를 한 트랜잭션으로 게시한다. 생성·검증·게시 실패 시 직전 정상 게시 배치를 제공하며 새 배치의 일부 결과만 노출하지 않는다. 자세한 계약은 BE-TECH-SPEC-004를 따른다.
+게시 원자성과 조회 범위는 구분한다. `publicationBatchId`는 최신 정상 게시 배치 또는 지정한 게시 배치의 `(published_at, id)`를 기준점으로 삼는다. 기준점 이하의 정상 게시 이력에서 요청 Key를 manifest에 포함한 배치의 Snapshot을 게시 시각·배치 ID·Snapshot ID 내림차순으로 선택한다. 현재 manifest에 없는 과거 Key도 조회하되 정확한 Key의 이력이 없으면 다른 기간으로 대체하지 않는다. 후속 요청은 같은 기준 ID를 사용한다. 게시 잠금 아래 게시 시각을 단조 증가시키고 게시 시각·manifest를 보존하는 조회 불변 조건은 BE-TECH-SPEC-004 §11.4를 따른다. 정상 게시된 Snapshot은 사후 오류 발견에도 PUBLISHED와 입력·출력을 유지하며 게시 후 변경·삭제 기능을 제공하지 않는다. 전체 원자 게시와 Last Known Good는 유지한다.
 
 ## 9 JSONB와 실행 제약
 
@@ -588,3 +600,11 @@ Evidence.source_locator는 페이지·문단·표 위치와 재인용 원출처 
 ### V1.1 — 2026-11-11
 
 승인된 001·002·003 V1.1 및 004 v0.2와 정합시켜 17개 논리 테이블 기준을 반영하고, 통합 배치 취소 후 기존 미완료 AnalysisRun 행의 종료, 새 소유자 실행 등록, 성공 분석 및 정상 저장 데이터 재사용 조건을 명시했다. 004의 후속 조회를 위해 최신 게시 배치 manifest 기준 선택 규칙을 반영했다. 테이블·컬럼·관계·제약은 승인된 개정 범위를 따른다. 문서 개정은 구현·마이그레이션 실행이나 성능 검증 완료를 의미하지 않는다.
+
+### V1.2 — 2026-11-11 작성, 2026-11-12 승인
+
+기존 가격·수집·Insight 모델의 17개 테이블과 관계를 유지하고 BE-TECH-SPEC-005의 APP_USER를 추가하여 18개 논리 테이블로 정리했다. BE-TECH-SPEC-006의 채팅 참여자 세션은 Spring 서버 메모리에서 관리하고 메시지는 영구 저장하지 않는다. 2026-11-12 최종 승인했다.
+
+### V1 Baseline — 2026-11-12
+
+기존 승인 V1.2의 18개 논리 테이블을 문서 버전 V1로 정규화했다. 테이블·컬럼·관계·키·제약은 변경하지 않았다.

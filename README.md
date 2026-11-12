@@ -1,151 +1,77 @@
 # 오늘의 수산 프로젝트 문서
 
-이 저장소는 **오늘의 수산** 프로젝트의 기획, 제품 의사결정, UX, 기술 설계 및 검증 기준을 관리한다. 문서는 제품 범위와 의사결정의 근거를 기록해 사람과 AI Agent가 일관된 기준으로 제품을 설계하고 개발하도록 돕는다.
+- **버전:** V1
+- **상태:** 승인
 
-루트 README는 전체 문서 탐색의 단일 진입점이다. 하위 README는 해당 영역의 상세 안내를 제공하며, 별도의 전체 문서 INDEX는 운영하지 않는다. 요구사항과 의사결정은 각 원본 문서를 기준으로 한다.
+## 프로젝트와 저장소
 
-## 문서 활용 방법
+오늘의 수산은 갈치·고등어·전복의 가격 차트, Price Insight, 최근 이슈와 품목별 실시간 채팅을 제공하는 모바일 웹 서비스다. 이 저장소는 제품 요구사항, 기술 설계와 검증 근거를 관리하는 Docs V1의 진입점이다.
 
-- 제품 범위와 필수 요구사항은 PRD, 확정된 제품 결정은 Accepted 상태의 PD에서 확인한다.
-- 기능별 상세 동작은 PF, 공통 운영·출시 기준은 PP, 사용자 흐름과 화면 상태는 UX 문서를 확인한다.
-- 기술 결정은 관련 ADR에서 확인한다. ADR과 제품 요구사항이 충돌하거나 최신 결정이 불명확하면 임의로 우선순위를 정하지 말고 결정권자에게 확인한다.
-- PoC와 리서치는 검증·조사 근거로 사용하며, 그 결과만으로 제품 정책이 확정된 것으로 해석하지 않는다. 관련 PD와 PRD를 함께 확인한다.
-- 문서 간 충돌을 검토할 때는 문서 상태와 결정 여부, 작성일, 상위 제품 결정, 근거 자료를 확인한다. 판단이 불명확하면 후속 결정 문서로 기록한다.
+V1 Baseline 기준일은 2026-11-12다. 문서 승인은 구현·테스트 완료를 의미하지 않는다. PoC·리서치의 실험 판정과 디자인 시안·토큰의 개별 승인 상태는 원본 기록을 따른다.
 
-## 문서 목차
+## 문서 구성과 책임
 
-### `MVP/product/`
+| 유형 | 책임 | 탐색 위치 |
+|---|---|---|
+| PRD | 서비스 목표와 상위 요구사항 | [PRD-001](MVP/product/PRD-001-MVP-제품-요구사항.md) |
+| PF | 기능별 동작·예외·인수 기준 | [features/](MVP/product/features/) |
+| PP | 공통 제품·운영 정책과 출시 기준 | [policies/](MVP/product/policies/) |
+| PD | 제품 의사결정과 근거 | [decisions/](MVP/product/decisions/) |
+| UX | 사용자 흐름·화면 상태·인터랙션 | [ux/](MVP/product/ux/) |
+| FE-ADR | 프론트엔드 기술 결정 | [프론트엔드 안내](MVP/architecture/frontend/README.md) |
+| BE-ADR | 백엔드 기술 결정 | [백엔드 안내](MVP/architecture/backend/README.md) |
+| BE-TECH-SPEC | 백엔드 구현 계약 | [Tech Spec 책임표](MVP/architecture/backend/tech-spec/README.md) |
+| BE-ERD | 영속 데이터 모델 | [BE-ERD-001](MVP/architecture/backend/erd/BE-ERD-001-통합-데이터-모델.md) — V1 승인, 18개 엔티티 |
+| PoC | 기술 검증의 방법·결과·한계 | [poc/](MVP/poc/) |
+| Research | 조사 결과와 제품 가설의 근거 | [research/](MVP/research/) |
 
-제품 전체의 MVP 범위와 필수 요구사항을 정의한다.
+## 문서 읽는 순서
 
-- [PRD-001-MVP-제품-요구사항.md](./MVP/product/PRD-001-MVP-제품-요구사항.md)
+| 목적 | 권장 순서 |
+|---|---|
+| 제품 전체 이해 | PRD → PF·PP·PD → UX |
+| 백엔드 구현 | PRD·PF → BE-ADR → BE-TECH-SPEC → BE-ERD |
+| 프론트엔드 구현 | PRD·PF·UX → FE-ADR → Design System |
 
-`decisions/`는 제품 방향과 정책에 관한 결정 및 근거를 기록한다.
+위 순서는 탐색 경로이며 문서의 승인 우선순위를 새로 정의하지 않는다. 계약이 충돌하면 각 원본의 승인 범위·결정일·관련 근거를 대조하고, 최신 기준이 불분명하면 결정권자에게 확인한다.
 
-- [PD-001-서비스-문제-정의.md](./MVP/product/decisions/PD-001-서비스-문제-정의.md)
-- [PD-002-핵심-타깃-사용자.md](./MVP/product/decisions/PD-002-핵심-타깃-사용자.md)
-- [PD-003-핵심-페르소나.md](./MVP/product/decisions/PD-003-핵심-페르소나.md)
-- [PD-004-서비스-포지셔닝.md](./MVP/product/decisions/PD-004-서비스-포지셔닝.md)
-- [PD-005-서비스-성장-전략.md](./MVP/product/decisions/PD-005-서비스-성장-전략.md)
-- [PD-006-비즈니스-모델.md](./MVP/product/decisions/PD-006-비즈니스-모델.md)
-- [PD-007-감성적-가치.md](./MVP/product/decisions/PD-007-감성적-가치.md)
-- [PD-008-Price-Insight.md](./MVP/product/decisions/PD-008-Price-Insight.md)
-- [PD-009-기준가격-정의.md](./MVP/product/decisions/PD-009-기준가격-정의.md)
-- [PD-010-데이터-신뢰-정책.md](./MVP/product/decisions/PD-010-데이터-신뢰-정책.md)
-- [PD-011-AI-역할-정의.md](./MVP/product/decisions/PD-011-AI-역할-정의.md)
-- [PD-012-MVP-범위.md](./MVP/product/decisions/PD-012-MVP-범위.md)
-- [PD-013-가격-데이터-PoC-적용-원칙.md](./MVP/product/decisions/PD-013-가격-데이터-PoC-적용-원칙.md)
+## 제품 설계
 
-`features/`는 화면과 기능별 동작, 예외 처리 및 인수 조건을 정의한다.
+| 문서 | 역할 |
+|---|---|
+| [PF-001](MVP/product/features/PF-001-홈-화면.md) | 홈·검색 |
+| [PF-002](MVP/product/features/PF-002-수산물-가격-차트.md) | 가격 차트·기간 선택 |
+| [PF-003](MVP/product/features/PF-003-Price-Insight.md) | Price Insight 표시·조회 |
+| [PF-004](MVP/product/features/PF-004-최근-이슈.md) | 최근 이슈 목록·출처 |
+| [PF-005](MVP/product/features/PF-005-실시간-채팅.md) | 품목별 실시간 채팅 |
+| [PP-002](MVP/product/policies/PP-002-AI-분석-운영-정책.md) | AI 분석 운영 정책 |
+| [PP-003](MVP/product/policies/PP-003-MVP-출시-인수-기준.md) | MVP 출시 인수 기준 |
+| [UX-001](MVP/product/ux/UX-001-사용자-흐름-및-정보-구조.md) | 사용자 흐름·정보 구조 |
+| [UX-002](MVP/product/ux/UX-002-화면-상태-및-인터랙션-설계.md) | 화면 상태·인터랙션 |
 
-- [PF-001-홈-화면.md](./MVP/product/features/PF-001-홈-화면.md)
-- [PF-002-수산물-가격-차트.md](./MVP/product/features/PF-002-수산물-가격-차트.md)
-- [PF-003-Price-Insight.md](./MVP/product/features/PF-003-Price-Insight.md)
-- [PF-004-최근-이슈.md](./MVP/product/features/PF-004-최근-이슈.md)
-- [PF-005-실시간-채팅.md](./MVP/product/features/PF-005-실시간-채팅.md)
+제품 결정의 상세 근거는 decisions/에서 확인한다. 핵심 기능의 요구사항과 화면 동작을 함께 읽고, 기술 구현 값은 해당 ADR·Tech Spec을 따른다.
 
-`policies/`는 기능 전반에 공통 적용되는 운영·출시 정책을 기록한다.
+## 기술·디자인 문서
 
-- [PP-002-AI-분석-운영-정책.md](./MVP/product/policies/PP-002-AI-분석-운영-정책.md)
-- [PP-003-MVP-출시-인수-기준.md](./MVP/product/policies/PP-003-MVP-출시-인수-기준.md)
+프론트엔드·백엔드 문서 목록은 각 영역 안내에서 관리한다. API·STOMP·JWT·Snapshot 게시·테이블 제약의 상세 내용은 원본 Tech Spec과 ERD에 둔다.
 
-`ux/`는 사용자 흐름, 정보 구조, 화면 상태와 인터랙션을 정의한다.
+| 문서 | 역할 |
+|---|---|
+| [Design System](design-system/README.md) | 디자인 문서·미리보기·토큰과 검증 기준 |
 
-- [UX-001-사용자-흐름-및-정보-구조.md](./MVP/product/ux/UX-001-사용자-흐름-및-정보-구조.md)
-- [UX-002-화면-상태-및-인터랙션-설계.md](./MVP/product/ux/UX-002-화면-상태-및-인터랙션-설계.md)
+## 검증 근거와 운영 참고
 
-### `MVP/research/user/`
+PoC·리서치는 관측 결과와 한계를 기록한다. PASS·FAIL·REVIEW를 문서 승인 상태나 전체 서비스의 검증 완료로 해석하지 않는다.
 
-사용자와 소비 흐름에 관한 조사 자료를 보관한다. 관찰된 사실과 제품 가설을 구분해 활용한다.
+| 문서 | 역할 |
+|---|---|
+| [POC-005](MVP/poc/POC-005-Gemini-PDF-분석-성능-및-정확도-검증.md) | Gemini PDF 추출의 성능·정확도 검증 결과와 한계 |
+| [UR-001](MVP/research/user/UR-001-제철-음식-소비-트렌드-리서치.md) | 제철 음식 소비 트렌드 조사 |
+| [env/](env) | 환경·설정 참고 자료; 설계 승인 문서와 구분 |
 
-- [UR-001-제철-음식-소비-트렌드-리서치.md](./MVP/research/user/UR-001-제철-음식-소비-트렌드-리서치.md)
+## 문서 관리 원칙
 
-### `MVP/poc/`
-
-가격 데이터의 출처, 연결 가능성 및 검증 결과를 기록한다. 제품 적용 범위는 관련 제품 결정 문서에서 확인한다.
-
-- [POC-001-aT-공영도매시장-API-데이터.md](./MVP/poc/POC-001-aT-공영도매시장-API-데이터.md)
-- [POC-002-외부-가격-데이터-검증-체크리스트.md](./MVP/poc/POC-002-외부-가격-데이터-검증-체크리스트.md)
-- [POC-003-수산물-가격-데이터-연계.md](./MVP/poc/POC-003-수산물-가격-데이터-연계.md)
-- [POC-004-KMI-FOC-PDF-수집-기술-검증.md](./MVP/poc/POC-004-KMI-FOC-PDF-수집-기술-검증.md)
-- [POC-005-Gemini-PDF-분석-성능-및-정확도-검증.md](./MVP/poc/POC-005-Gemini-PDF-분석-성능-및-정확도-검증.md)
-
-### `MVP/architecture/frontend/`
-
-프론트엔드 아키텍처의 기술 선택과 구현 기준을 관리한다. 상세한 기술 결정의 관계와 사용 방법은 [README.md](./MVP/architecture/frontend/README.md)를 함께 확인한다.
-
-- [README.md](./MVP/architecture/frontend/README.md)
-
-`adr/`는 프론트엔드 기술 결정과 재검토 기준을 기록한다.
-
-- [FE-ADR-001-프레임워크-및-버전-선정.md](./MVP/architecture/frontend/adr/FE-ADR-001-프레임워크-및-버전-선정.md)
-- [FE-ADR-002-렌더링-전략-선정.md](./MVP/architecture/frontend/adr/FE-ADR-002-렌더링-전략-선정.md)
-- [FE-ADR-003-데이터-캐싱-및-갱신-전략.md](./MVP/architecture/frontend/adr/FE-ADR-003-데이터-캐싱-및-갱신-전략.md)
-- [FE-ADR-004-스타일링-및-디자인-시스템-적용-전략.md](./MVP/architecture/frontend/adr/FE-ADR-004-%EC%8A%A4%ED%83%80%EC%9D%BC%EB%A7%81-%EB%B0%8F-%EB%94%94%EC%9E%90%EC%9D%B8-%EC%8B%9C%EC%8A%A4%ED%85%9C-%EC%A0%81%EC%9A%A9-%EC%A0%84%EB%9E%B5.md)
-- [FE-ADR-005. 클라이언트 상태 관리 전략.md](<./MVP/architecture/frontend/adr/FE-ADR-005. 클라이언트 상태 관리 전략.md>)
-- [FE-ADR-006-가격-차트-라이브러리-선정.md](./MVP/architecture/frontend/adr/FE-ADR-006-가격-차트-라이브러리-선정.md)
-- [FE-ADR-007-백엔드-REST-API-연동-및-통신-전략.md](./MVP/architecture/frontend/adr/FE-ADR-007-백엔드-REST-API-연동-및-통신-전략.md)
-- [FE-ADR-008-실시간-채팅-WebSocket-연결-전략.md](./MVP/architecture/frontend/adr/FE-ADR-008-실시간-채팅-WebSocket-연결-전략.md)
-- [FE-ADR-009-MVP-익명-사용자-식별-및-보안-토큰-관리-전략.md](./MVP/architecture/frontend/adr/FE-ADR-009-MVP-익명-사용자-식별-및-보안-토큰-관리-전략.md)
-- [FE-ADR-010-프론트엔드-배포-및-CI-CD-전략.md](./MVP/architecture/frontend/adr/FE-ADR-010-프론트엔드-배포-및-CI-CD-전략.md)
-- [FE-ADR-011-프론트엔드-오류-처리-및-사용자-피드백-전략.md](./MVP/architecture/frontend/adr/FE-ADR-011-프론트엔드-오류-처리-및-사용자-피드백-전략.md)
-
-### `MVP/architecture/backend/`
-
-백엔드 아키텍처의 기술 선택과 운영 원칙을 관리한다. ADR 안내는 [README.md](./MVP/architecture/backend/README.md), Tech Spec별 상세 책임은 [tech-spec/README.md](./MVP/architecture/backend/tech-spec/README.md)를 확인한다.
-
-- [README.md](./MVP/architecture/backend/README.md)
-- [BE-ADR-001-백엔드-아키텍처.md](./MVP/architecture/backend/BE-ADR-001-백엔드-아키텍처.md)
-- [BE-ADR-002-런타임-및-웹-프레임워크.md](./MVP/architecture/backend/BE-ADR-002-런타임-및-웹-프레임워크.md)
-- [BE-ADR-003-빌드-및-의존성-관리.md](./MVP/architecture/backend/BE-ADR-003-빌드-및-의존성-관리.md)
-- [BE-ADR-004-데이터-접근-및-영속성.md](./MVP/architecture/backend/BE-ADR-004-데이터-접근-및-영속성.md)
-- [BE-ADR-005-데이터베이스-및-AWS-인프라.md](./MVP/architecture/backend/BE-ADR-005-데이터베이스-및-AWS-인프라.md)
-- [BE-ADR-006-스키마-변경-및-백업.md](./MVP/architecture/backend/BE-ADR-006-스키마-변경-및-백업.md)
-- [BE-ADR-007-가격수집-PDF-AI-파이프라인.md](./MVP/architecture/backend/BE-ADR-007-가격수집-PDF-AI-파이프라인.md)
-- [BE-ADR-008-AI-실행-아키텍처.md](./MVP/architecture/backend/BE-ADR-008-AI-실행-아키텍처.md)
-
-`tech-spec/`는 승인된 백엔드 처리 기준을 정의한다. 문서별 책임 경계는 [안내 문서](./MVP/architecture/backend/tech-spec/README.md)를 따른다.
-
-- [BE-TECH-SPEC-001-데이터-수집-정규화-검증.md](./MVP/architecture/backend/tech-spec/BE-TECH-SPEC-001-데이터-수집-정규화-검증.md)
-- [BE-TECH-SPEC-002-가격-데이터-모델링-및-산지-도매가격-산출.md](./MVP/architecture/backend/tech-spec/BE-TECH-SPEC-002-가격-데이터-모델링-및-산지-도매가격-산출.md)
-- [BE-TECH-SPEC-003-PDF-기사-수집-및-정보-추출.md](./MVP/architecture/backend/tech-spec/BE-TECH-SPEC-003-PDF-기사-수집-및-정보-추출.md)
-- [BE-TECH-SPEC-004-Price-Insight-생성-검증-게시.md](./MVP/architecture/backend/tech-spec/BE-TECH-SPEC-004-Price-Insight-생성-검증-게시.md)
-
-백엔드 데이터 구조의 기준 ERD를 함께 확인한다.
-
-- [BE-ERD-001-통합-데이터-모델.md](./MVP/architecture/backend/erd/BE-ERD-001-통합-데이터-모델.md) — 17개 논리 테이블 기준
-
-### `design-system/`
-
-디자인 시스템 기준, Figma 설계 절차와 디자인 검증 문서를 관리한다. 승인된 토큰과 미리보기 자료는 함께 확인할 수 있다.
-
-- [README.md](./design-system/README.md)
-- [DS-001-디자인-시스템-현황.md](./design-system/DS-001-%EB%94%94%EC%9E%90%EC%9D%B8-%EC%8B%9C%EC%8A%A4%ED%85%9C-%ED%98%84%ED%99%A9.md)
-- [tokens.json](./design-system/tokens/tokens.json)
-- [index.html](./design-system/preview/index.html)
-
-`figma/`는 Figma 설계 흐름과 토큰 동기화 정책을 담는다.
-
-- [FG-001-Figma-설계-및-단계별-승인-기준.md](./design-system/figma/FG-001-Figma-%EC%84%A4%EA%B3%84-%EB%B0%8F-%EB%8B%A8%EA%B3%84%EB%B3%84-%EC%8A%B9%EC%9D%B8-%EA%B8%B0%EC%A4%80.md)
-- [FG-002-컴포넌트-Variant-및-명명-규칙.md](./design-system/figma/FG-002-%EC%BB%B4%ED%8F%AC%EB%84%8C%ED%8A%B8-Variant-%EB%B0%8F-%EB%AA%85%EB%AA%85-%EA%B7%9C%EC%B9%99.md)
-- [FG-003-화면-상태-프로토타입-설계.md](./design-system/figma/FG-003-%ED%99%94%EB%A9%B4-%EC%83%81%ED%83%9C-%ED%94%84%EB%A1%9C%ED%86%A0%ED%83%80%EC%9E%85-%EC%84%A4%EA%B3%84.md)
-- [FG-004-디자인-토큰-동기화-정책.md](./design-system/figma/FG-004-%EB%94%94%EC%9E%90%EC%9D%B8-%ED%86%A0%ED%81%B0-%EB%8F%99%EA%B8%B0%ED%99%94-%EC%A0%95%EC%B1%85.md)
-
-`verification/`는 디자인 요구사항의 추적, 의존성 및 검증 기준을 관리한다.
-
-- [FV-001-요구사항-추적-및-검증-상태.md](./design-system/verification/FV-001-요구사항-추적-및-검증-상태.md)
-- [FV-002-Override-및-의존성-관리.md](./design-system/verification/FV-002-Override-및-의존성-관리.md)
-- [FV-003-접근성-반응형-E2E-검증-계획.md](./design-system/verification/FV-003-접근성-반응형-E2E-검증-계획.md)
-
-### `env/`
-
-개발 환경과 설정에 관한 프로젝트 문서를 보관한다.
-
-- [ENV-001-키.md](./env/ENV-001-%ED%82%A4.md)
-
-### `.github/`
-
-브랜치·커밋 운영과 Type + Area 라벨 기반 PR 작성·검토 규칙을 관리한다.
-
-- [CONTRIBUTING.md](./.github/CONTRIBUTING.md)
-- [PULL_REQUEST_TEMPLATE.md](./.github/PULL_REQUEST_TEMPLATE.md)
+- 요구사항·정책·구현 계약은 담당 원본 문서에서 관리하고 README에는 탐색 정보만 둔다.
+- 문서 경로와 ID를 유지하고, 문서 변경 시 관련 링크·참조·승인 상태를 확인한다.
+- 실험 결과, 미채택 대안, 기술·정책 버전과 과거 변경 이력은 문서 버전과 구분해 보존한다.
+- 저장소 운영 규칙은 [AGENTS.md](AGENTS.md), Git·PR 작성 규칙은 [CONTRIBUTING.md](.github/CONTRIBUTING.md), PR 양식은 [PULL_REQUEST_TEMPLATE.md](.github/PULL_REQUEST_TEMPLATE.md)를 따른다.
