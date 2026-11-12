@@ -1,11 +1,11 @@
 # BE-TECH-SPEC-004 — Price Insight 생성·검증·게시
 
-- **버전:** v0.2
+- **버전:** V1
 - **상태:** 승인
 - **승인일:** 2026-11-11
 
 **담당 영역:** Backend / Price Insight
-**관련 문서:** [BE-TECH-SPEC-001 V1.1](BE-TECH-SPEC-001-데이터-수집-정규화-검증.md), [BE-TECH-SPEC-002 V1.1](BE-TECH-SPEC-002-가격-데이터-모델링-및-산지-도매가격-산출.md), [BE-TECH-SPEC-003 V1.1](BE-TECH-SPEC-003-PDF-기사-수집-및-정보-추출.md), [BE-ERD-001 V1.1](../erd/BE-ERD-001-통합-데이터-모델.md), [BE-ADR-007](../BE-ADR-007-가격수집-PDF-AI-파이프라인.md), [BE-ADR-008](../BE-ADR-008-AI-실행-아키텍처.md)
+**관련 문서:** [BE-TECH-SPEC-001 V1](BE-TECH-SPEC-001-데이터-수집-정규화-검증.md), [BE-TECH-SPEC-002 V1](BE-TECH-SPEC-002-가격-데이터-모델링-및-산지-도매가격-산출.md), [BE-TECH-SPEC-003 V1](BE-TECH-SPEC-003-PDF-기사-수집-및-정보-추출.md), [BE-ERD-001 V1](../erd/BE-ERD-001-통합-데이터-모델.md), [BE-ADR-007](../BE-ADR-007-가격수집-PDF-AI-파이프라인.md), [BE-ADR-008](../BE-ADR-008-AI-실행-아키텍처.md)
 
 ---
 
@@ -871,52 +871,49 @@ COLLECTION_BATCH.publication_status:
 
 실행 `status`는 수집·분석 등 배치 실행 결과를 나타내고, `publication_status`는 통합 Insight 게시 결과를 나타낸다. 모든 게시 대상의 검증과 원자적 게시가 성공하면 실행 `status`가 `SUCCEEDED`인 경우와 허용된 선택 원천 실패로 `PARTIAL_SUCCESS`인 경우 모두 `publication_status=PUBLISHED`가 될 수 있다. 부분 수집 성공은 게시 성공을 뜻하지 않으며, 게시 성공도 부분 실행 상태를 `SUCCEEDED`로 승격하지 않는다. 필수 가격 조건이나 전체 Snapshot 검증·게시가 실패하면 `PUBLISHED`로 전환하지 않는다.
 
-### 11.4 Last Known Good 조회
+### 11.4 조회 기준점과 과거 Key 조회
 
-사용자 API는 개별 어종의 최신 게시 시각으로 Snapshot을 선택하지 않는다.
+`publicationBatchId`는 Snapshot 소유 배치가 아니라 조회 이력의 상한을 정하는 기준점이다. 생략한 첫 요청은 최신 정상 게시 배치를 선택하고 그 ID를 응답한다. 후속 월간·반월 요청은 같은 ID를 보내며, 서버는 그 배치의 `(published_at, id)` 이하에 게시된 이력만 검색한다. 유효하지 않은 기준 ID는 결과 없음이며 다른 기준으로 대체하지 않는다.
 
-**가장 최근에 게시된 통합 배치**를 기준으로 조회한다.
+요청 Key는 사용자가 선택한 `speciesId + granularity + periodStart + periodEnd`로 정확히 구성한다. 후보는 정상 게시 배치의 manifest에 해당 Key가 포함된 Snapshot이며, 기준점 이하에서 `배치 published_at DESC, 배치 id DESC, Snapshot id DESC`로 하나를 선택한다. 동일 배치·Key는 UNIQUE이므로 Snapshot ID는 최종 결정적 정렬 기준이다. Key가 현재 manifest에서 빠져도 과거 게시 이력을 조회하며, 이력이 없으면 다른 기간을 대신하지 않고 `파악 중`이다. 최신성은 대상 기간 종료일이 아니라 해당 Key의 게시 버전 순서다.
 
-첫 요청에서 `publicationBatchId`를 생략하면 서버는 요청 시점의 최신 게시 배치를 선택하고 응답에 그 ID를 반환한다. 월간·반월을 별도 요청하는 클라이언트는 후속 요청마다 첫 응답의 `publicationBatchId`를 지정한다. 지정된 경우 서버는 해당 ID가 게시된 배치인지 확인하고 그 배치만 조회한다. ID가 유효하지 않거나 요청 Key가 그 배치의 manifest에 없으면 결과 없음으로 응답하며 최신 배치나 과거 Key로 자동 대체하지 않는다. 같은 화면의 월간·반월 요청은 이 규칙으로 하나의 게시 버전에 고정한다.
+게시 잠금 안에서 새 배치의 `published_at`을 직전 게시 시각보다 엄격하게 증가하도록 부여한다. 동일 시각 또는 시계 역행이면 직전 값보다 PostgreSQL TIMESTAMPTZ 정밀도 단위만큼 큰 시각을 사용한다. 게시된 배치의 `published_at`과 manifest는 불변이며 각 Snapshot의 게시 시각은 부모 배치와 동일하게 저장한다. 이 불변 조건으로 이후 게시가 이미 반환한 기준점 안으로 들어오는 것을 방지한다. 과거 데이터의 동일 게시 시각은 ID 정렬로 결정한다.
 
 ```sql
-WITH selected_batch AS (
-    SELECT id, target_insight_keys
+WITH anchor AS (
+    SELECT id, published_at
     FROM collection_batch
     WHERE publication_status = 'PUBLISHED'
       AND (:publicationBatchId IS NULL OR id = :publicationBatchId)
     ORDER BY published_at DESC, id DESC
     LIMIT 1
+), latest_key AS (
+    SELECT s.*, a.id AS publication_batch_id
+    FROM anchor a
+    JOIN collection_batch b
+      ON b.publication_status = 'PUBLISHED'
+     AND (b.published_at, b.id) <= (a.published_at, a.id)
+    JOIN price_insight_snapshot s ON s.batch_id = b.id
+    WHERE s.species_id = :speciesId
+      AND s.insight_key = :insightKey
+      AND (b.target_insight_keys->'keys') ? s.insight_key
+    ORDER BY b.published_at DESC, b.id DESC, s.id DESC
+    LIMIT 1
 )
-SELECT
-    b.id AS publication_batch_id,
-    s.id,
-    s.batch_id,
-    s.species_id,
-    s.insight_key,
-    s.input_payload,
-    s.output_payload,
-    s.as_of
-FROM price_insight_snapshot s
-JOIN selected_batch b
-  ON b.id = s.batch_id
-WHERE s.status = 'PUBLISHED'
-  AND s.species_id = :speciesId
-  AND s.insight_key = :insightKey
-  AND (b.target_insight_keys->'keys') ? s.insight_key;
+SELECT * FROM latest_key WHERE status = 'PUBLISHED';
 ```
 
-`publicationBatchId`가 없으면 SQL이 최신 게시 배치를 선택한다. ID가 있으면 해당 게시 배치만 선택한다. manifest 포함 여부도 같은 조회에서 확인하므로 하나의 응답에 다른 배치 결과가 섞이지 않는다.
+정상 게시된 Snapshot은 사후에 오류가 발견돼도 `PUBLISHED` 상태와 입력·출력·근거를 그대로 유지한다. MVP는 게시 후 수정·삭제·무효화·정정·수동 재분석을 제공하지 않는다. 조회는 기준점 이하 최신 게시본을 그대로 반환하며 오류 발견을 이유로 이를 건너뛰거나 이전 버전으로 전환하지 않는다. `FAILED`는 게시 전 생성·검증 실패에만 사용하며 게시 후 무효화 상태로 재정의하지 않는다. 위 SQL과 기존 게시 기준점 불변 조건을 유지하고 추가 컬럼·관리 API·이력 테이블을 요구하지 않는다.
 
-API 응답에는 후속 조회에 사용할 `publicationBatchId`를 포함한다. 월간과 반월을 별도로 조회하는 경우 첫 응답을 받은 뒤 다음 요청에 해당 ID를 전달한다. 요청 ID를 생략한 별도 요청은 각각 최신 배치를 선택할 수 있으므로 같은 게시 버전이 필요한 조회에는 사용하지 않는다.
+응답 `publicationBatchId`는 기준점 ID를 유지한다. 응답 `publishedAt`은 선택된 Snapshot의 실제 게시 시각이다. Snapshot의 `batch_id`는 기준점 배치와 다를 수 있다. Snapshot이 없어도 첫 응답의 기준 ID를 후속 조회에 전달할 수 있어야 한다. 기본 기간을 생략한 조회는 기준 배치 manifest를 사용하지만, 사용자가 지정한 과거 Key를 현재 기간으로 바꾸지 않는다.
 
-**주의:** 위 SQL에서 `:insightKey`는 요청 시점의 달력 기간으로 새로 계산하지 않는다. 조회 기준인 최신 `PUBLISHED` 배치의 `target_insight_keys`에서 해당 어종·기간 유형에 대응하는 Key를 선택해야 한다. 오래된 Last Known Good 배치의 대상 기간과 오늘 날짜의 대상 기간은 다를 수 있기 때문이다.
+2026-11-01 정상 게시 후 10월 하반월은 `2026-10-16~2026-10-31`, 월별은 `2026-10-01~2026-10-31` Key를 조회한다. 10월 30일에는 두 기간 모두 완료되지 않았다. 동일 10월 월별 Key가 11월 3일까지 세 번 게시되면 기준점 이하의 11월 3일 게시본을 선택한다. 이후 현재 생성 대상에서 빠져도 해당 Key의 마지막 정상 게시 이력을 조회한다.
 
 ---
 
 ## 12. 최소 ERD 변경
 
-본 문서는 기존 16개 논리 테이블과, 003에서 결정한 뉴스 전용 Batch 1개를 포함한 **총 17개 테이블**을 목표 구조로 한다.
+이 절은 수집·Insight의 기존 17개 테이블에 관한 저장 계약이다. 통합 ERD는 APP_USER를 포함한 18개 엔티티이며 이번 조회 확장은 테이블·컬럼을 추가하지 않는다.
 
 ### 12.1 COLLECTION_BATCH
 
@@ -1007,7 +1004,7 @@ public record PriceInsightResponse(
 | PRICE_ONLY             | 정상 결과                      |
 | Gemini 호출            | 모델별 동시성 및 timeout 제한  |
 | 작업 점유              | PostgreSQL lease 및 fencing    |
-| 사용자 조회            | 마지막 정상 게시 배치          |
+| 사용자 조회            | 고정 기준점 이하 정확한 Key의 최신 게시 이력 |
 
 운영 로그 및 상태 조회에는 다음 정보를 포함한다.
 
@@ -1052,9 +1049,13 @@ public record PriceInsightResponse(
 | T22 | 이전 배치 실행 중 다음 날 06:00       | 이전 배치 취소·신규 등록                        |
 | T23 | 취소된 Worker의 지연 응답             | 완료 및 게시 반영 차단                          |
 | T24 | 서버 프로세스 재시작                  | DB 상태 및 lease 기반 복구                      |
-| T25 | 이전 게시본의 기간과 오늘 날짜가 다름 | 게시 배치의 Key로 조회                          |
-| T26 | 첫 조회 후 배치 ID를 지정해 월간·반월 별도 조회 | 새 배치가 게시되어도 같은 publicationBatchId 결과 유지 |
-| T27 | 지정 배치에 Key가 없거나 게시되지 않음 | 과거·최신 배치로 대체하지 않고 결과 없음       |
+| T25 | 과거 차트 기간 선택 | 기준점 이하 정확한 Key의 최신 게시본 조회 |
+| T26 | 첫 조회 후 배치 ID를 지정해 월간·반월 별도 조회 | 새 배치가 게시되어도 같은 publicationBatchId 상한 유지 |
+| T27 | 기준점 manifest에 Key 없음 | 기준점 이하 과거 게시 이력에서 정확한 Key 조회; 이력 없으면 파악 중 |
+
+### PI-09 정상 게시 후 오류 발견
+
+Given: 품목·기간의 Snapshot이 정상 게시됐다. When: 게시 후 사실관계 오류가 발견됐다. Then: `PUBLISHED`와 입력·출력 Payload를 변경하지 않고 해당 Key의 기준점 이하 최신 게시본을 계속 반환한다. 이전 Snapshot으로 자동 전환하지 않으며 관리 API·수동 재분석·무효화 컬럼·이력 테이블을 요구하지 않는다.
 
 PostgreSQL의 실제 잠금·트랜잭션·유일성 제약은 Testcontainers 기반 통합 테스트로 검증한다.
 
@@ -1075,7 +1076,7 @@ Gemini의 자연어 품질 평가는 실제 검증된 시장 자료로 구성한
 7. 정량화된 의미 중복 검증
 8. 고급 AI 호출 비용 및 품질 관측 시스템
 
-향후 기존 Snapshot 재사용을 도입할 때는 현재의 배치 직접 조회 계약을 게시 구성 매핑 기반으로 확장할 수 있다.
+현재 과거 조회는 배치 직접 소유 Snapshot의 게시 이력을 검색한다. 일일 생성에서 기존 Snapshot을 재사용하는 Manifest 확장은 별도 고도화 범위다.
 
 MVP에 해당 구조를 미리 구현하지 않는다.
 
@@ -1101,7 +1102,7 @@ MVP에 해당 구조를 미리 구현하지 않는다.
 | D-06.5     | 정상 PRICE_ONLY                                             | ACCEPTED     |
 | D-07.2     | 전체 원자적 게시                                            | ACCEPTED     |
 | D-07.3     | 매일 전체 Snapshot 신규 생성                                | ACCEPTED     |
-| D-07.4     | 게시 통합 배치 기준 조회                                    | 설계 계약    |
+| D-07.4     | 게시 기준점 이하 정확한 Key의 최신 게시 이력 조회 | 설계 계약 |
 | D-07.4.2   | 논리 Insight Key와 Snapshot UUID 분리                       | ACCEPTED     |
 | D-08.2     | 활성 통합 배치 최대 1개                                     | ACCEPTED     |
 | D-08.3     | 이전 미완료 배치 취소 후 새 배치 실행                       | ACCEPTED     |

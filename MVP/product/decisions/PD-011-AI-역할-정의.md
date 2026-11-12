@@ -1,8 +1,10 @@
 # PD-011 AI 역할 정의
 
+- **버전:** V1
+
 ## Status
 
-Accepted
+승인
 
 ## 핵심 요약
 
@@ -19,7 +21,7 @@ Accepted
 
 ---
 
-# 1. AI를 사용하는 이유
+## 1. AI를 사용하는 이유
 
 오늘의 수산은 다음과 같이 서로 다른 형태의 데이터를 활용한다.
 
@@ -43,7 +45,7 @@ AI는 이러한 정보 탐색과 정리 비용을 줄이기 위해 사용한다.
 
 ---
 
-# 2. AI의 기본 역할
+## 2. AI의 기본 역할
 
 오늘의 수산에서 AI의 역할은 다음과 같다.
 
@@ -53,7 +55,7 @@ AI 자체가 새로운 시장 정보를 만들어내지 않는다.
 
 ---
 
-# 3. AI는 데이터의 원 출처가 아니다
+## 3. AI는 데이터의 원 출처가 아니다
 
 다음 구조를 기본 원칙으로 한다.
 
@@ -73,7 +75,7 @@ AI Summary는 언제든 다시 생성할 수 있는 가공 정보다.
 
 ---
 
-# 4. 정형 데이터 수집
+## 4. 정형 데이터 수집
 
 정형 데이터는 AI를 사용하지 않는다.
 
@@ -104,7 +106,7 @@ AI Summary는 언제든 다시 생성할 수 있는 가공 정보다.
 
 ---
 
-# 5. AI를 사용하지 않는 이유
+## 5. AI를 사용하지 않는 이유
 
 정형 데이터를 AI를 통해 검색하면 다음 문제가 발생한다.
 
@@ -117,7 +119,7 @@ AI Summary는 언제든 다시 생성할 수 있는 가공 정보다.
 
 ---
 
-# 6. 비정형 데이터
+## 6. 비정형 데이터
 
 AI는 다음과 같은 비정형 데이터 탐색에 활용한다.
 
@@ -131,7 +133,7 @@ AI는 다음과 같은 비정형 데이터 탐색에 활용한다.
 
 ---
 
-# 7. MVP Collector AI
+## 7. MVP Collector AI
 
 MVP에서 구현하는 AI의 중심 역할을 `Collector AI`로 정의한다.
 
@@ -139,7 +141,7 @@ Collector AI는 오늘의 수산에 필요한 비정형 시장 정보를 찾고 
 
 ---
 
-# 8. Collector AI 역할
+## 8. Collector AI 역할
 
 Collector AI는 다음 작업을 수행한다.
 
@@ -174,7 +176,7 @@ Collector AI는 다음 작업을 수행한다.
 
 ---
 
-# 9. Collector AI 출력 예시
+## 9. Collector AI 출력 예시
 
 ### 원문
 
@@ -208,7 +210,7 @@ Collector AI는 다음 작업을 수행한다.
 
 ---
 
-# 10. Collector AI의 제한
+## 10. Collector AI의 제한
 
 Collector AI는 다음 판단을 임의로 수행하지 않는다.
 
@@ -224,7 +226,7 @@ Collector AI의 주요 목적은
 
 ---
 
-# 11. MVP Price Insight 생성
+## 11. MVP Price Insight 생성
 
 MVP에서는 Collector AI와 정형 데이터를 활용해 Price Insight에 필요한 시장 배경을 구성한다.
 
@@ -250,7 +252,7 @@ Price Insight
 
 ---
 
-# 12. MVP에서 복수 AI Agent를 사용하지 않는다
+## 12. MVP에서 복수 AI Agent를 사용하지 않는다
 
 초기에는 다음 구조를 구현하지 않는다.
 
@@ -278,7 +280,7 @@ Price Insight
 
 ---
 
-# 13. MVP Trade-off
+## 13. MVP Trade-off
 
 오늘의 수산은 MVP에서
 
@@ -290,7 +292,7 @@ Price Insight
 
 ---
 
-# 14. MVP 신뢰성 관리
+## 14. MVP 신뢰성 관리
 
 MVP에서는 다음 수준의 검증을 수행한다.
 
@@ -324,7 +326,7 @@ Collector AI가 사용한 자료의 원문 URL을 저장한다.
 
 ---
 
-# 15. Human-in-the-loop
+## 15. Human-in-the-loop
 
 MVP에서는 개발자가 AI 검증 과정의 일부를 담당할 수 있다.
 
@@ -346,7 +348,7 @@ MVP에서는 개발자가 AI 검증 과정의 일부를 담당할 수 있다.
 
 ---
 
-# 16. Human Review를 선택한 이유
+## 16. Human Review를 선택한 이유
 
 초기에는 수집되는 데이터량이 제한적일 가능성이 높다.
 
@@ -354,7 +356,7 @@ MVP에서는 개발자가 AI 검증 과정의 일부를 담당할 수 있다.
 
 ---
 
-# 17. AI가 하면 안 되는 일
+## 17. AI가 하면 안 되는 일
 
 ## 출처 없는 사실 생성
 
@@ -396,7 +398,7 @@ AI가 확인되지 않은 새로운 사실을 생성해서는 안 된다.
 
 ---
 
-# 18. AI 비용 원칙
+## 18. AI 비용 원칙
 
 AI 호출은 서비스 비용에 직접적인 영향을 준다.
 
@@ -420,7 +422,7 @@ AI 호출은 서비스 비용에 직접적인 영향을 준다.
 
 ---
 
-# 19. 사용자 수와 AI 비용 분리
+## 19. 사용자 수와 AI 비용 분리
 
 오늘의 수산은 다음 구조를 지향한다.
 
@@ -450,7 +452,7 @@ AI 분석
 
 ---
 
-# 20. 향후 신뢰성 개선
+## 20. 향후 신뢰성 개선
 
 서비스 규모와 데이터량이 증가하면 개발자 검수만으로 운영하기 어려워질 수 있다.
 
@@ -458,7 +460,7 @@ AI 분석
 
 ---
 
-# 21. Reliability Phase 1 — Evidence 구조화
+## 21. Reliability Phase 1 — Evidence 구조화
 
 수집된 정보를 단순 요약문보다 구조화된 Evidence 형태로 관리한다.
 
@@ -474,7 +476,7 @@ AI 분석
 
 ---
 
-# 22. Reliability Phase 2 — Atomic Claim
+## 22. Reliability Phase 2 — Atomic Claim
 
 문서 안의 주요 사실을 작은 Claim 단위로 분리한다.
 
@@ -500,7 +502,7 @@ AI 분석
 
 ---
 
-# 23. Reliability Phase 3 — Verifier AI
+## 23. Reliability Phase 3 — Verifier AI
 
 Verifier AI를 도입하여
 
@@ -517,7 +519,7 @@ Verifier AI를 도입하여
 
 ---
 
-# 24. Verifier AI 비용 문제
+## 24. Verifier AI 비용 문제
 
 Verifier AI를 모든 문서와 Claim에 사용하면 AI 비용이 크게 증가할 수 있다.
 
@@ -525,7 +527,7 @@ Verifier AI를 모든 문서와 Claim에 사용하면 AI 비용이 크게 증가
 
 ---
 
-# 25. 단계적 검증
+## 25. 단계적 검증
 
 우선 저비용 검증을 수행하고 필요한 데이터만 높은 비용의 검증으로 전달한다.
 
@@ -555,7 +557,7 @@ Verifier AI를 모든 문서와 Claim에 사용하면 AI 비용이 크게 증가
 
 ---
 
-# 26. Model Routing
+## 26. Model Routing
 
 모든 작업에 동일한 AI 모델을 사용하지 않는다.
 
@@ -576,7 +578,7 @@ Verifier AI를 모든 문서와 Claim에 사용하면 AI 비용이 크게 증가
 
 ---
 
-# 27. Harness Engineering
+## 27. Harness Engineering
 
 AI 신뢰성을 자동화하는 단계에서 Harness Engineering을 도입한다.
 
@@ -588,7 +590,7 @@ Harness Engineering은 AI를 더 똑똑하게 만드는 것이 아니라
 
 ---
 
-# 28. Harness Engineering 후보
+## 28. Harness Engineering 후보
 
 향후 다음 기능을 검토한다.
 
@@ -607,7 +609,7 @@ Harness Engineering은 AI를 더 똑똑하게 만드는 것이 아니라
 
 ---
 
-# 29. Evidence Binding
+## 29. Evidence Binding
 
 향후 Price Insight의 각 주요 주장에 Evidence ID를 연결하는 구조를 검토한다.
 
@@ -625,7 +627,7 @@ E103
 
 ---
 
-# 30. 자동 Fallback
+## 30. 자동 Fallback
 
 향후 검증 실패 시 AI에게 계속 답을 생성하도록 하지 않는다.
 
@@ -645,7 +647,7 @@ Validation 실패
 
 ---
 
-# 31. AI Evaluation
+## 31. AI Evaluation
 
 AI 시스템이 고도화되면 실제 시장 사례를 기반으로 평가셋을 구축한다.
 
@@ -677,7 +679,7 @@ Expected:
 
 ---
 
-# 32. AI 고도화 로드맵
+## 32. AI 고도화 로드맵
 
 ## MVP
 
@@ -729,7 +731,7 @@ Model Routing
 
 ---
 
-# 33. MVP에서 하지 않는 것
+## 33. MVP에서 하지 않는 것
 
 초기 버전에서는 다음을 구현하지 않는다.
 
@@ -744,7 +746,7 @@ Model Routing
 
 ---
 
-# 34. 기술 부채가 아닌 계획된 확장
+## 34. 기술 부채가 아닌 계획된 확장
 
 MVP에서 AI 검증 시스템을 단순화하는 것을 무계획한 기술 부채로 보지 않는다.
 
@@ -761,7 +763,7 @@ MVP에서 AI 검증 시스템을 단순화하는 것을 무계획한 기술 부�
 
 ---
 
-# 35. 현재 Decision
+## 35. 현재 Decision
 
 오늘의 수산 MVP에서는
 
@@ -775,7 +777,7 @@ AI 결과에는 반드시 가능한 범위에서 원 출처를 연결한다.
 
 ---
 
-# 36. 후속 기술 결정
+## 36. 후속 기술 결정
 
 다음 내용은 Product Decision에서 결정하지 않는다.
 
@@ -797,7 +799,7 @@ AI 결과에는 반드시 가능한 범위에서 원 출처를 연결한다.
 
 ---
 
-# 37. 최종 결론
+## 37. 최종 결론
 
 오늘의 수산은 AI를 서비스의 주인공으로 만들지 않는다.
 

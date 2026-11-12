@@ -1,11 +1,11 @@
 # BE-TECH-SPEC-002 가격 데이터 모델링 및 산지 도매가격 산출
 
-- **버전:** V1.1
+- **버전:** V1
 - **상태:** 승인
 - **기준일:** 2026-11-09
 - **기존 정책 기준:** 사용자 제공 BE-TECH-SPEC-002 v0.5 Accepted
 - **집계 정책:** price-aggregation-v2 유지
-- **관련 문서:** [001 V1.1](BE-TECH-SPEC-001-데이터-수집-정규화-검증.md), [003 V1.1](BE-TECH-SPEC-003-PDF-기사-수집-및-정보-추출.md), [004 v0.2](BE-TECH-SPEC-004-Price-Insight-생성-검증-게시.md), [통합 ERD V1.1](../erd/BE-ERD-001-통합-데이터-모델.md)
+- **관련 문서:** [001 V1](BE-TECH-SPEC-001-데이터-수집-정규화-검증.md), [003 V1](BE-TECH-SPEC-003-PDF-기사-수집-및-정보-추출.md), [004 V1](BE-TECH-SPEC-004-Price-Insight-생성-검증-게시.md), [통합 ERD V1](../erd/BE-ERD-001-통합-데이터-모델.md)
 
 ## 1 목적과 책임
 

@@ -1,6 +1,8 @@
 # BE-ADR-007 — 가격 수집·PDF 분석·Price Insight 파이프라인
 
-- **상태:** 승인
+- **버전:** V1
+
+- **상태:** 승인(Accepted)
 - **최초 결정일:** 2026-10-29
 - **개정일:** 2026-11-05
 - **관련 문서:** POC-003, POC-004, POC-005, PD-008, PD-010, PD-011, [BE-TECH-SPEC-001](tech-spec/BE-TECH-SPEC-001-데이터-수집-정규화-검증.md), [BE-TECH-SPEC-002](tech-spec/BE-TECH-SPEC-002-가격-데이터-모델링-및-산지-도매가격-산출.md)

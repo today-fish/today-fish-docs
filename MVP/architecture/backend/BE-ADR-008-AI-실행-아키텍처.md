@@ -1,6 +1,8 @@
 # BE-ADR-008 — AI 실행 아키텍처
 
-- **상태:** Accepted
+- **버전:** V1
+
+- **상태:** 승인(Accepted)
 - **결정일:** 2026-11-05
 - **관련 문서:** BE-ADR-007, PD-008, PD-010, PD-011, POC-005, [BE-TECH-SPEC-001](tech-spec/BE-TECH-SPEC-001-데이터-수집-정규화-검증.md), [BE-TECH-SPEC-002](tech-spec/BE-TECH-SPEC-002-가격-데이터-모델링-및-산지-도매가격-산출.md)
 

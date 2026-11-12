@@ -1,5 +1,8 @@
 # 백엔드 Tech Spec 책임과 처리 흐름
 
+- **버전:** V1
+- **상태:** 승인
+
 이 문서는 Tech Spec 문서별 책임 경계의 단일 관리 위치다. 각 문서의 세부 구현 계약은 해당 Tech Spec을 기준으로 확인한다.
 
 ## 문서별 책임
@@ -12,7 +15,7 @@
 | [BE-TECH-SPEC-004](BE-TECH-SPEC-004-Price-Insight-생성-검증-게시.md)             | Insight 입력 선정·생성·검증, PRICE_ONLY, 전체 원자적 게시 |
 | [BE-TECH-SPEC-005](BE-TECH-SPEC-005-사용자-식별-인증-세션.md)                    | 익명 사용자·JWT·CSRF·WebSocket Principal                  |
 | [BE-TECH-SPEC-006](BE-TECH-SPEC-006-실시간-채팅.md)                              | 품목별 참여자 세션, 닉네임·색상, 3분 예약·복구, STOMP 채팅 |
-| [BE-ERD-001](../erd/BE-ERD-001-통합-데이터-모델.md)                              | V1.2 승인, 18개 논리 테이블과 관계·키·제약의 통합 기준               |
+| [BE-ERD-001](../erd/BE-ERD-001-통합-데이터-모델.md)                              | V1 승인, 18개 논리 테이블과 관계·키·제약의 통합 기준               |
 
 ## 처리 흐름
 
