@@ -130,7 +130,9 @@ Spring Boot
 
 서버는 세션 ID와 함께 현재 JWT Principal 및 품목별 소유권을 확인한다. 클라이언트가 전달한 닉네임·색상은 신뢰하지 않는다.
 
-복원은 유효한 JWT Principal의 사용자 ID와 기존 소유자 ID, 품목이 일치하고 서버에 ACTIVE 또는 만료 전 RESERVED 세션이 존재할 때 허용한다. JWT 만료나 쿠키 삭제로 새 사용자 ID가 발급되면 기존 세션을 복원하지 않는다. 별도 복원 토큰은 발급하지 않는다. 소유권 또는 품목이 다르면 기존 세션 정보를 노출하지 않고 거부한다. 이후 세션 ID를 정리하고 신규 참여하되, 같은 사용자·품목의 유효 세션이 있으면 먼저 재사용한다.
+복원은 유효한 JWT Principal의 사용자 ID와 기존 소유자 ID, 품목이 일치하고 서버에 ACTIVE 또는 만료 전 RESERVED 세션이 존재할 때 허용한다. JWT 만료나 쿠키 삭제로 새 사용자 ID가 발급되면 기존 세션을 복원하지 않는다.
+
+별도 복원 토큰은 발급하지 않는다. 소유권 또는 품목이 다르면 기존 세션 정보를 노출하지 않고 거부한다. 이후 세션 ID를 정리하고 신규 참여하되, 같은 사용자·품목의 유효 세션이 있으면 먼저 재사용한다.
 
 ## 4. STOMP 계약
 
@@ -147,7 +149,11 @@ Spring Boot
 
 위 경로는 정식 STOMP 계약이다. `{speciesId}`는 내부 `SPECIES.id BIGINT`이며 외부 API 품목 코드가 아니다. `/ws/chat`은 HTTP WebSocket Handshake 경로이며 나머지는 STOMP Destination이다.
 
-FAB 최초 클릭 → 005 인증 준비 → Handshake → CONNECT → 개인 `session`·`error` 구독 처리 확인 → JOIN → 참여 성공 → 해당 품목 Topic 구독 → 메시지 송수신 순서로 진행한다. 구독의 서버 처리 완료 여부는 단순 SUBSCRIBE 전송만으로 단정하지 않으며 STOMP RECEIPT 연동은 구현 시 검증한다. 참여 전 Topic SUBSCRIBE·메시지 SEND는 거부한다. 같은 Principal의 다른 탭에 결과가 전달되지 않도록 요청 WebSocket 세션 ID로 개인 응답을 한정한다. Spring의 `@SendToUser(broadcast = false)` 또는 동등한 세션 지정 전달을 적용하고 실제 라우팅은 통합 검증한다.
+FAB 최초 클릭 → 005 인증 준비 → Handshake → CONNECT → 개인 `session`·`error` 구독 처리 확인 → JOIN → 참여 성공 → 해당 품목 Topic 구독 → 메시지 송수신 순서로 진행한다.
+
+구독의 서버 처리 완료 여부는 단순 SUBSCRIBE 전송만으로 단정하지 않으며 STOMP RECEIPT 연동은 구현 시 검증한다. 참여 전 Topic SUBSCRIBE·메시지 SEND는 거부한다.
+
+같은 Principal의 다른 탭에 결과가 전달되지 않도록 요청 WebSocket 세션 ID로 개인 응답을 한정한다. Spring의 `@SendToUser(broadcast = false)` 또는 동등한 세션 지정 전달을 적용하고 실제 라우팅은 통합 검증한다.
 
 `APP_USER.id`·`speciesId`는 BIGINT, `participantSessionId`·`requestId`·`clientMessageId`·`messageId`는 UUID다. `requestId`는 JOIN 요청을, `clientMessageId`는 SEND 요청을 식별한다.
 
@@ -157,9 +163,13 @@ FAB 최초 클릭 → 005 인증 준비 → Handshake → CONNECT → 개인 `se
 {"requestId":"a6b49f84-7cd2-4bb7-94e4-20d77836c8e1"}
 ```
 
-신규 요청은 `participantSessionId`를 생략한다. 기존 세션 복원은 `{"requestId":"c9bd7b28-cf47-4f24-9b8a-688fe722a520","participantSessionId":"550e8400-e29b-41d4-a716-446655440000"}`을 보낸다. `-1`이나 잘못된 UUID는 신규 참여 표시로 취급하지 않고 `CHAT_CONTENT_INVALID`로 거부한다. Java DTO의 선택적 UUID가 null로 매핑되더라도 외부 JSON은 필드 생략을 기본으로 한다.
+신규 요청은 `participantSessionId`를 생략한다. 기존 세션 복원은 `{"requestId":"c9bd7b28-cf47-4f24-9b8a-688fe722a520","participantSessionId":"550e8400-e29b-41d4-a716-446655440000"}`을 보낸다.
 
-서버는 요청 Destination의 어종, JWT Principal, 서버에 보관한 세션의 소유자·품목·ACTIVE 또는 유효한 RESERVED 상태를 검증한다. 세션 ID가 없어도 같은 사용자·품목의 유효 세션이 있으면 재사용한다. 명시한 세션 ID의 복원이 실패하면 `CHAT_SESSION_NOT_RESTORABLE`을 반환한다. 클라이언트는 오래된 ID를 지우고 신규 JOIN을 요청하며 서버는 같은 사용자·품목의 유효 세션을 먼저 재사용한다.
+`-1`이나 잘못된 UUID는 신규 참여 표시로 취급하지 않고 `CHAT_CONTENT_INVALID`로 거부한다. Java DTO의 선택적 UUID가 null로 매핑되더라도 외부 JSON은 필드 생략을 기본으로 한다.
+
+서버는 요청 Destination의 어종, JWT Principal, 서버에 보관한 세션의 소유자·품목·ACTIVE 또는 유효한 RESERVED 상태를 검증한다. 세션 ID가 없어도 같은 사용자·품목의 유효 세션이 있으면 재사용한다.
+
+명시한 세션 ID의 복원이 실패하면 `CHAT_SESSION_NOT_RESTORABLE`을 반환한다. 클라이언트는 오래된 ID를 지우고 신규 JOIN을 요청하며 서버는 같은 사용자·품목의 유효 세션을 먼저 재사용한다.
 
 참여 성공 시 다음 형태의 상태를 반환한다.
 
@@ -174,7 +184,9 @@ FAB 최초 클릭 → 005 인증 준비 → Handshake → CONNECT → 개인 `se
 }
 ```
 
-`/user/queue/chat/session` 응답은 요청 `requestId`를 그대로 돌려준다. `speciesId`(BIGINT), `participantSessionId`(UUID), `nickname`(문자열), `colorId`(정수), `restored`(boolean)는 필수다. `restored=true`는 ACTIVE 재사용 또는 RESERVED 복원을, `false`는 신규 세션 생성을 뜻한다. 실제 어종 ID·닉네임 값은 서버 데이터에 따른다. 사용자 ID와 JWT 원문은 보내지 않는다.
+`/user/queue/chat/session` 응답은 요청 `requestId`를 그대로 돌려준다. `speciesId`(BIGINT), `participantSessionId`(UUID), `nickname`(문자열), `colorId`(정수), `restored`(boolean)는 필수다.
+
+`restored=true`는 ACTIVE 재사용 또는 RESERVED 복원을, `false`는 신규 세션 생성을 뜻한다. 실제 어종 ID·닉네임 값은 서버 데이터에 따른다. 사용자 ID와 JWT 원문은 보내지 않는다.
 
 ### 4.3 메시지 계약
 
@@ -202,7 +214,9 @@ FAB 최초 클릭 → 005 인증 준비 → Handshake → CONNECT → 개인 `se
 }
 ```
 
-SEND의 `clientMessageId`(UUID)와 `content`(문자열)는 필수다. 브로드캐스트의 `messageId`는 서버 생성 UUID, `createdAt`은 서버 UTC ISO 8601 시각이며 나머지 필드는 검증된 세션 상태에서 생성한다. `clientMessageId`는 요청 값을 그대로 전달한다. `messageId`는 일시적 식별에만 사용한다. `speciesId`가 채팅방을, `participantSessionId`가 비영구 참여자를 식별한다.
+SEND의 `clientMessageId`(UUID)와 `content`(문자열)는 필수다. 브로드캐스트의 `messageId`는 서버 생성 UUID, `createdAt`은 서버 UTC ISO 8601 시각이며 나머지 필드는 검증된 세션 상태에서 생성한다.
+
+`clientMessageId`는 요청 값을 그대로 전달한다. `messageId`는 일시적 식별에만 사용한다. `speciesId`가 채팅방을, `participantSessionId`가 비영구 참여자를 식별한다.
 
 전송 성공 후에도 실제 수신자의 전달·확인까지 보장하지 않는다.
 
@@ -225,7 +239,9 @@ record ChatErrorResponse(UUID requestId, UUID clientMessageId,
                          ChatErrorCode code, String message, Long retryAfterMs) {}
 ```
 
-신규 JOIN JSON은 `participantSessionId`를 생략한다. 오류 응답에서 JOIN은 `requestId`, SEND는 `clientMessageId`만 포함하며 다른 상관관계 필드는 생략한다. 식별자 자체가 누락·파싱 불가하면 값을 만들어 돌려주지 않는다. `code`와 사용자 안내용 `message`는 필수이며 `retryAfterMs`는 서버가 지연값을 산정한 경우에만 포함한다. 클라이언트는 `message` 문구 대신 `code`로 분기한다.
+신규 JOIN JSON은 `participantSessionId`를 생략한다. 오류 응답에서 JOIN은 `requestId`, SEND는 `clientMessageId`만 포함하며 다른 상관관계 필드는 생략한다.
+
+식별자 자체가 누락·파싱 불가하면 값을 만들어 돌려주지 않는다. `code`와 사용자 안내용 `message`는 필수이며 `retryAfterMs`는 서버가 지연값을 산정한 경우에만 포함한다. 클라이언트는 `message` 문구 대신 `code`로 분기한다.
 
 ```json
 {"requestId":"a6b49f84-7cd2-4bb7-94e4-20d77836c8e1","code":"CHAT_ROOM_FULL","message":"현재 채팅방이 가득 찼습니다."}

@@ -869,15 +869,25 @@ COLLECTION_BATCH.publication_status:
   PUBLISHED
 ```
 
-실행 `status`는 수집·분석 등 배치 실행 결과를 나타내고, `publication_status`는 통합 Insight 게시 결과를 나타낸다. 모든 게시 대상의 검증과 원자적 게시가 성공하면 실행 `status`가 `SUCCEEDED`인 경우와 허용된 선택 원천 실패로 `PARTIAL_SUCCESS`인 경우 모두 `publication_status=PUBLISHED`가 될 수 있다. 부분 수집 성공은 게시 성공을 뜻하지 않으며, 게시 성공도 부분 실행 상태를 `SUCCEEDED`로 승격하지 않는다. 필수 가격 조건이나 전체 Snapshot 검증·게시가 실패하면 `PUBLISHED`로 전환하지 않는다.
+실행 `status`는 수집·분석 등 배치 실행 결과를 나타내고, `publication_status`는 통합 Insight 게시 결과를 나타낸다. 모든 게시 대상의 검증과 원자적 게시가 성공하면 실행 `status`가 `SUCCEEDED`인 경우와 허용된 선택 원천 실패로 `PARTIAL_SUCCESS`인 경우 모두 `publication_status=PUBLISHED`가 될 수 있다.
+
+부분 수집 성공은 게시 성공을 뜻하지 않으며, 게시 성공도 부분 실행 상태를 `SUCCEEDED`로 승격하지 않는다. 필수 가격 조건이나 전체 Snapshot 검증·게시가 실패하면 `PUBLISHED`로 전환하지 않는다.
 
 ### 11.4 조회 기준점과 과거 Key 조회
 
 `publicationBatchId`는 Snapshot 소유 배치가 아니라 조회 이력의 상한을 정하는 기준점이다. 생략한 첫 요청은 최신 정상 게시 배치를 선택하고 그 ID를 응답한다. 후속 월간·반월 요청은 같은 ID를 보내며, 서버는 그 배치의 `(published_at, id)` 이하에 게시된 이력만 검색한다. 유효하지 않은 기준 ID는 결과 없음이며 다른 기준으로 대체하지 않는다.
 
-요청 Key는 사용자가 선택한 `speciesId + granularity + periodStart + periodEnd`로 정확히 구성한다. 후보는 정상 게시 배치의 manifest에 해당 Key가 포함된 Snapshot이며, 기준점 이하에서 `배치 published_at DESC, 배치 id DESC, Snapshot id DESC`로 하나를 선택한다. 동일 배치·Key는 UNIQUE이므로 Snapshot ID는 최종 결정적 정렬 기준이다. Key가 현재 manifest에서 빠져도 과거 게시 이력을 조회하며, 이력이 없으면 다른 기간을 대신하지 않고 `파악 중`이다. 최신성은 대상 기간 종료일이 아니라 해당 Key의 게시 버전 순서다.
+요청 Key는 사용자가 선택한 `speciesId + granularity + periodStart + periodEnd`로 정확히 구성한다. 후보는 정상 게시 배치의 manifest에 해당 Key가 포함된 Snapshot이며, 기준점 이하에서 `배치 published_at DESC, 배치 id DESC, Snapshot id DESC`로 하나를 선택한다.
 
-게시 잠금 안에서 새 배치의 `published_at`을 직전 게시 시각보다 엄격하게 증가하도록 부여한다. 동일 시각 또는 시계 역행이면 직전 값보다 PostgreSQL TIMESTAMPTZ 정밀도 단위만큼 큰 시각을 사용한다. 게시된 배치의 `published_at`과 manifest는 불변이며 각 Snapshot의 게시 시각은 부모 배치와 동일하게 저장한다. 이 불변 조건으로 이후 게시가 이미 반환한 기준점 안으로 들어오는 것을 방지한다. 과거 데이터의 동일 게시 시각은 ID 정렬로 결정한다.
+동일 배치·Key는 UNIQUE이므로 Snapshot ID는 최종 결정적 정렬 기준이다. Key가 현재 manifest에서 빠져도 과거 게시 이력을 조회하며, 이력이 없으면 다른 기간을 대신하지 않고 `파악 중`이다.
+
+최신성은 대상 기간 종료일이 아니라 해당 Key의 게시 버전 순서다.
+
+게시 잠금 안에서 새 배치의 `published_at`을 직전 게시 시각보다 엄격하게 증가하도록 부여한다. 동일 시각 또는 시계 역행이면 직전 값보다 PostgreSQL TIMESTAMPTZ 정밀도 단위만큼 큰 시각을 사용한다.
+
+게시된 배치의 `published_at`과 manifest는 불변이며 각 Snapshot의 게시 시각은 부모 배치와 동일하게 저장한다. 이 불변 조건으로 이후 게시가 이미 반환한 기준점 안으로 들어오는 것을 방지한다.
+
+과거 데이터의 동일 게시 시각은 ID 정렬로 결정한다.
 
 ```sql
 WITH anchor AS (
@@ -903,9 +913,13 @@ WITH anchor AS (
 SELECT * FROM latest_key WHERE status = 'PUBLISHED';
 ```
 
-정상 게시된 Snapshot은 사후에 오류가 발견돼도 `PUBLISHED` 상태와 입력·출력·근거를 그대로 유지한다. MVP는 게시 후 수정·삭제·무효화·정정·수동 재분석을 제공하지 않는다. 조회는 기준점 이하 최신 게시본을 그대로 반환하며 오류 발견을 이유로 이를 건너뛰거나 이전 버전으로 전환하지 않는다. `FAILED`는 게시 전 생성·검증 실패에만 사용하며 게시 후 무효화 상태로 재정의하지 않는다. 위 SQL과 기존 게시 기준점 불변 조건을 유지하고 추가 컬럼·관리 API·이력 테이블을 요구하지 않는다.
+정상 게시된 Snapshot은 사후에 오류가 발견돼도 `PUBLISHED` 상태와 입력·출력·근거를 그대로 유지한다. MVP는 게시 후 수정·삭제·무효화·정정·수동 재분석을 제공하지 않는다. 조회는 기준점 이하 최신 게시본을 그대로 반환하며 오류 발견을 이유로 이를 건너뛰거나 이전 버전으로 전환하지 않는다.
 
-응답 `publicationBatchId`는 기준점 ID를 유지한다. 응답 `publishedAt`은 선택된 Snapshot의 실제 게시 시각이다. Snapshot의 `batch_id`는 기준점 배치와 다를 수 있다. Snapshot이 없어도 첫 응답의 기준 ID를 후속 조회에 전달할 수 있어야 한다. 기본 기간을 생략한 조회는 기준 배치 manifest를 사용하지만, 사용자가 지정한 과거 Key를 현재 기간으로 바꾸지 않는다.
+`FAILED`는 게시 전 생성·검증 실패에만 사용하며 게시 후 무효화 상태로 재정의하지 않는다. 위 SQL과 기존 게시 기준점 불변 조건을 유지하고 추가 컬럼·관리 API·이력 테이블을 요구하지 않는다.
+
+응답 `publicationBatchId`는 기준점 ID를 유지한다. 응답 `publishedAt`은 선택된 Snapshot의 실제 게시 시각이다. Snapshot의 `batch_id`는 기준점 배치와 다를 수 있다.
+
+Snapshot이 없어도 첫 응답의 기준 ID를 후속 조회에 전달할 수 있어야 한다. 기본 기간을 생략한 조회는 기준 배치 manifest를 사용하지만, 사용자가 지정한 과거 Key를 현재 기간으로 바꾸지 않는다.
 
 2026-11-01 정상 게시 후 10월 하반월은 `2026-10-16~2026-10-31`, 월별은 `2026-10-01~2026-10-31` Key를 조회한다. 10월 30일에는 두 기간 모두 완료되지 않았다. 동일 10월 월별 Key가 11월 3일까지 세 번 게시되면 기준점 이하의 11월 3일 게시본을 선택한다. 이후 현재 생성 대상에서 빠져도 해당 Key의 마지막 정상 게시 이력을 조회한다.
 

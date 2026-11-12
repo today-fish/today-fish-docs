@@ -15,7 +15,9 @@
 
 MVP에는 **회원 로그인 기능을 도입하지 않는다**. 최초 **채팅 인증 준비** 시 서버가 **30일 유효한 익명 JWT**를 발급하고 브라우저의 **HttpOnly Cookie**에 저장한다. 만료까지 7일 이하 남은 유효한 JWT는 동일 사용자 ID로 갱신한다. 서버는 이 식별자를 연결 현황 등 운영 관제에 활용할 수 있으나, **실제 사람의 신원 인증 수단으로 간주하지 않는다**. 회원 로그인과 Refresh Token은 V1에서 설계한다.
 
-CSRF 토큰은 **익명 JWT가 없어도 호출 가능한 `GET /api/auth/csrf`**로 먼저 발급받아 React 메모리에 보관한다. 이후 `POST /api/auth/anonymous`에 CSRF 헤더를 제출하여 사용자 발급·검증·갱신을 처리한다. STOMP `CONNECT`에도 CSRF 토큰을 제출한다. 백엔드는 `CookieCsrfTokenRepository`를 사용하며 HTTP·STOMP 연계 동작을 통합 검증한다.
+CSRF 토큰은 **익명 JWT가 없어도 호출 가능한 `GET /api/auth/csrf`**로 먼저 발급받아 React 메모리에 보관한다. 이후 `POST /api/auth/anonymous`에 CSRF 헤더를 제출하여 사용자 발급·검증·갱신을 처리한다.
+
+STOMP `CONNECT`에도 CSRF 토큰을 제출한다. 백엔드는 `CookieCsrfTokenRepository`를 사용하며 HTTP·STOMP 연계 동작을 통합 검증한다.
 
 **선정 근거 (3줄)**
 
@@ -46,7 +48,11 @@ JWT는 **서명형 토큰(JWS)**을 전제로 한다. 일반적인 JWS의 Header
 | 쿠키 삭제·변조         | 삭제: 새 사용자 생성 / 변조: 401 거부                                  |
 | IP 기반 Rate Limiting  | MVP 미도입; 필요 시 백엔드에서 재검토                                  |
 
-쿠키의 `Domain`, `Path` 및 Cross-Origin 요청의 `credentials`·CORS 설정은 실제 배포 도메인에 맞춰 결정한다. `SameSite=Lax`만으로 모든 CSRF 위험을 막는다고 가정하지 않는다. 최초 채팅 진입 시 여러 탭의 동시 발급에 따른 중복 ID·응답 경합도 구현 시 검증한다. 초기 경쟁에서 각 탭에 다른 ID가 발급되는 예외는 005가 허용하지만, PF-005의 품목별 참여자 세션 공유와 연결되는 서로 다른 사용자 ID는 별도 참여자로 처리할 수 있다. 같은 사용자 ID의 같은 품목 탭은 006의 참여자 세션을 공유한다.
+쿠키의 `Domain`, `Path` 및 Cross-Origin 요청의 `credentials`·CORS 설정은 실제 배포 도메인에 맞춰 결정한다. `SameSite=Lax`만으로 모든 CSRF 위험을 막는다고 가정하지 않는다.
+
+최초 채팅 진입 시 여러 탭의 동시 발급에 따른 중복 ID·응답 경합도 구현 시 검증한다. 초기 경쟁에서 각 탭에 다른 ID가 발급되는 예외는 005가 허용하지만, PF-005의 품목별 참여자 세션 공유와 연결되는 서로 다른 사용자 ID는 별도 참여자로 처리할 수 있다.
+
+같은 사용자 ID의 같은 품목 탭은 006의 참여자 세션을 공유한다.
 
 ## 4. CSRF 및 WebSocket 연계
 

@@ -124,7 +124,9 @@ filename = kmi-394-31.pdf  (PoC 생성 이름)
 stored = S02-2026-10-28-kmi-394-31.pdf
 ```
 
-KMI의 `_o_f`, `_o_o`는 서버가 HTML에 제공한 첨부파일 파라미터를 **수정·재인코딩·추측하지 않고 그대로 사용**한다. `URI`를 통한 절대화 후에도 쿼리 문자열의 `%25` 등 인코딩은 유지되어야 한다. PDF 주소를 `idx`만으로 새로 만들어서는 안 된다. 허용 다운로드는 `https`, `www.kmi.re.kr`, `/web/trebook/download.do`, `rbsIdx=394`, `idx`, `itemId=saved_pdf_file_name` 조건으로 제한한다.
+KMI의 `_o_f`, `_o_o`는 서버가 HTML에 제공한 첨부파일 파라미터를 **수정·재인코딩·추측하지 않고 그대로 사용**한다. `URI`를 통한 절대화 후에도 쿼리 문자열의 `%25` 등 인코딩은 유지되어야 한다.
+
+PDF 주소를 `idx`만으로 새로 만들어서는 안 된다. 허용 다운로드는 `https`, `www.kmi.re.kr`, `/web/trebook/download.do`, `rbsIdx=394`, `idx`, `itemId=saved_pdf_file_name` 조건으로 제한한다.
 
 두 플랫폼 모두 다운로드 응답의 최종 URL(리다이렉트 후), HTTP 200, `Content-Length`와 누적 바이트, 파일 선두 `%PDF-` 및 PDFBox 파싱을 확인한다. 단, **HTTP 200과 PDF 파싱 성공은 재이용 권한의 증거가 아니다.**
 

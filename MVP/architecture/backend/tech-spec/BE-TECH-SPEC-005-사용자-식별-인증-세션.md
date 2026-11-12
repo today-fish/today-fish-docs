@@ -147,7 +147,7 @@ public interface AnonymousAuthService {
 }
 ```
 
-실제 구현에서는 갱신이 불필요한 경우 `jwt`를 반환하지 않도록 한다. 인증 실패는 타입이 구분되는 예외로 처리한다.
+JWT 갱신이 불필요하면 `jwt`를 반환하지 않는다. 인증 실패는 유형별 예외로 구분한다.
 
 `AppUserRepository`는 Spring Data JPA의 `save`, `existsById`를 우선 사용한다. 별도 인증 추상화 계층은 도입하지 않는다.
 
