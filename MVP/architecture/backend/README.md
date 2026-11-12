@@ -6,31 +6,33 @@
 
 ## 문서 목차
 
-| ADR | 주제 | 핵심 결정 |
-|---|---|---|
-| [BE-ADR-001](BE-ADR-001-백엔드-아키텍처.md) | 백엔드 아키텍처 | 가벼운 모듈형 모놀리스 |
-| [BE-ADR-002](BE-ADR-002-런타임-및-웹-프레임워크.md) | 런타임/프레임워크 | Java 25 · Corretto 25 · Boot 4.1 · MVC/STOMP |
-| [BE-ADR-003](BE-ADR-003-빌드-및-의존성-관리.md) | 빌드 도구 | Gradle 9.x · Kotlin DSL · Wrapper |
-| [BE-ADR-004](BE-ADR-004-데이터-접근-및-영속성.md) | 데이터 접근 | Spring Data JPA + 선택적 Spring JDBC |
-| [BE-ADR-005](BE-ADR-005-데이터베이스-및-AWS-인프라.md) | DB/인프라 | PostgreSQL · EC2 t2.micro · RDS db.t3.micro |
-| [BE-ADR-006](BE-ADR-006-스키마-변경-및-백업.md) | 스키마/백업 | `ddl-auto=none`, 운영 전환 시 Flyway V1 |
+| ADR                                                    | 주제               | 핵심 결정                                         |
+| ------------------------------------------------------ | ------------------ | ------------------------------------------------- |
+| [BE-ADR-001](BE-ADR-001-백엔드-아키텍처.md)            | 백엔드 아키텍처    | 가벼운 모듈형 모놀리스                            |
+| [BE-ADR-002](BE-ADR-002-런타임-및-웹-프레임워크.md)    | 런타임/프레임워크  | Java 25 · Corretto 25 · Boot 4.1 · MVC/STOMP      |
+| [BE-ADR-003](BE-ADR-003-빌드-및-의존성-관리.md)        | 빌드 도구          | Gradle 9.x · Kotlin DSL · Wrapper                 |
+| [BE-ADR-004](BE-ADR-004-데이터-접근-및-영속성.md)      | 데이터 접근        | Spring Data JPA + 선택적 Spring JDBC              |
+| [BE-ADR-005](BE-ADR-005-데이터베이스-및-AWS-인프라.md) | DB/인프라          | PostgreSQL · EC2 t2.micro · RDS db.t3.micro       |
+| [BE-ADR-006](BE-ADR-006-스키마-변경-및-백업.md)        | 스키마/백업        | `ddl-auto=none`, 운영 전환 시 Flyway V1           |
 | [BE-ADR-007](BE-ADR-007-가격수집-PDF-AI-파이프라인.md) | 수집/AI 파이프라인 | `@Scheduled` · 이중 원천 · 가격 필수 · PDF 조건부 |
-| [BE-ADR-008](BE-ADR-008-AI-실행-아키텍처.md) | AI 실행 아키텍처 | Spring Boot 직접 LLM 호출 · 백그라운드 작업 |
+| [BE-ADR-008](BE-ADR-008-AI-실행-아키텍처.md)           | AI 실행 아키텍처   | Spring Boot 직접 LLM 호출 · 백그라운드 작업       |
 
 ## Tech Spec 문서 목차
 
-| 문서 | 주제 | 범위 |
-|---|---|---|
-| [BE-TECH-SPEC-001](tech-spec/BE-TECH-SPEC-001-데이터-수집-정규화-검증.md) | 데이터 수집·정규화·검증 | aT·KMI API 및 별도 발간물·기사 수집 경로 |
-| [BE-TECH-SPEC-002](tech-spec/BE-TECH-SPEC-002-가격-데이터-모델링-및-산지-도매가격-산출.md) | 가격 데이터 모델링·산출 | 산지·도매 가격의 독립 집계와 기간 가격 |
-| [BE-TECH-SPEC-003](tech-spec/BE-TECH-SPEC-003-PDF-기사-수집-및-정보-추출.md) | PDF·기사 수집 및 정보 추출 | 원본 보존·Gemini 추출·Fact 및 Evidence 검증 |
-| [BE-TECH-SPEC-004](tech-spec/BE-TECH-SPEC-004-Price-Insight-생성-검증-게시.md) | Price Insight 생성·검증·게시 | 입력 선정·생성·검증·전체 원자적 게시 |
+| 문서                                                                                       | 주제                         | 범위                                        |
+| ------------------------------------------------------------------------------------------ | ---------------------------- | ------------------------------------------- |
+| [BE-TECH-SPEC-001](tech-spec/BE-TECH-SPEC-001-데이터-수집-정규화-검증.md)                  | 데이터 수집·정규화·검증      | aT·KMI API 및 별도 발간물·기사 수집 경로    |
+| [BE-TECH-SPEC-002](tech-spec/BE-TECH-SPEC-002-가격-데이터-모델링-및-산지-도매가격-산출.md) | 가격 데이터 모델링·산출      | 산지·도매 가격의 독립 집계와 기간 가격      |
+| [BE-TECH-SPEC-003](tech-spec/BE-TECH-SPEC-003-PDF-기사-수집-및-정보-추출.md)               | PDF·기사 수집 및 정보 추출   | 원본 보존·Gemini 추출·Fact 및 Evidence 검증 |
+| [BE-TECH-SPEC-004](tech-spec/BE-TECH-SPEC-004-Price-Insight-생성-검증-게시.md)             | Price Insight 생성·검증·게시 | 입력 선정·생성·검증·전체 원자적 게시        |
+| [BE-TECH-SPEC-005](tech-spec/BE-TECH-SPEC-005-사용자-식별-인증-세션.md)                    | 익명 사용자 식별·인증        | JWT·CSRF·WebSocket Principal                |
+| [BE-TECH-SPEC-006](tech-spec/BE-TECH-SPEC-006-실시간-채팅.md)                              | 실시간 채팅                  | 품목별 참여자 세션·3분 복구·STOMP 메시징    |
 
 문서별 책임 경계와 병렬 입력 처리 흐름은 [tech-spec/README.md](tech-spec/README.md)를 단일 기준으로 따른다.
 
 ## 통합 데이터 모델
 
-- [BE-ERD-001](erd/BE-ERD-001-통합-데이터-모델.md) — 17개 논리 테이블과 관계·키·제약의 통합 기준
+- [BE-ERD-001](erd/BE-ERD-001-통합-데이터-모델.md) — V1.2 승인, 18개 논리 테이블과 관계·키·제약의 통합 기준
 
 ## ADR 문서 구조
 

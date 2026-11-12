@@ -110,10 +110,12 @@
 - [BE-TECH-SPEC-002-가격-데이터-모델링-및-산지-도매가격-산출.md](./MVP/architecture/backend/tech-spec/BE-TECH-SPEC-002-가격-데이터-모델링-및-산지-도매가격-산출.md)
 - [BE-TECH-SPEC-003-PDF-기사-수집-및-정보-추출.md](./MVP/architecture/backend/tech-spec/BE-TECH-SPEC-003-PDF-기사-수집-및-정보-추출.md)
 - [BE-TECH-SPEC-004-Price-Insight-생성-검증-게시.md](./MVP/architecture/backend/tech-spec/BE-TECH-SPEC-004-Price-Insight-생성-검증-게시.md)
+- [BE-TECH-SPEC-005-사용자-식별-인증-세션.md](./MVP/architecture/backend/tech-spec/BE-TECH-SPEC-005-사용자-식별-인증-세션.md)
+- [BE-TECH-SPEC-006-실시간-채팅.md](./MVP/architecture/backend/tech-spec/BE-TECH-SPEC-006-실시간-채팅.md)
 
 백엔드 데이터 구조의 기준 ERD를 함께 확인한다.
 
-- [BE-ERD-001-통합-데이터-모델.md](./MVP/architecture/backend/erd/BE-ERD-001-통합-데이터-모델.md) — 17개 논리 테이블 기준
+- [BE-ERD-001-통합-데이터-모델.md](./MVP/architecture/backend/erd/BE-ERD-001-통합-데이터-모델.md) — V1.2 승인, 18개 논리 테이블 기준
 
 ### `design-system/`
 

@@ -18,7 +18,7 @@
 | [FE-ADR-006](./adr/FE-ADR-006-가격-차트-라이브러리-선정.md) | 가격 차트 | Recharts |
 | [FE-ADR-007](./adr/FE-ADR-007-백엔드-REST-API-연동-및-통신-전략.md) | REST API 통신 | TanStack Query → 기능별 API 함수 → 공통 Fetch 클라이언트 |
 | [FE-ADR-008](./adr/FE-ADR-008-실시간-채팅-WebSocket-연결-전략.md) | 실시간 채팅 | WebSocket(WSS) + STOMP · 탭별 연결 · 최근 메시지 100개 메모리 보관 |
-| [FE-ADR-009](./adr/FE-ADR-009-MVP-익명-사용자-식별-및-보안-토큰-관리-전략.md) | 익명 사용자·보안 토큰 | 7일 익명 JWT HttpOnly Cookie + 별도 CSRF API |
+| [FE-ADR-009](./adr/FE-ADR-009-MVP-익명-사용자-식별-및-보안-토큰-관리-전략.md) | 익명 사용자·보안 토큰 | 30일 익명 JWT HttpOnly Cookie + 별도 CSRF API |
 | [FE-ADR-010](./adr/FE-ADR-010-프론트엔드-배포-및-CI-CD-전략.md) | 배포·CI/CD | Cloudflare Pages 정적 배포 · GitHub Actions · 선택적 Staging |
 | [FE-ADR-011](./adr/FE-ADR-011-프론트엔드-오류-처리-및-사용자-피드백-전략.md) | 오류 처리·사용자 피드백 | 공통 오류 분류 + 기능별 오류 UI · 핵심 오류 Sentry 수집 |
 
