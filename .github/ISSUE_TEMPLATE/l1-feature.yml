@@ -1,0 +1,31 @@
+
+name: "L1 Feature"
+description: "MVP 사용자 기능 등록"
+title: "[L1-XX] "
+type: Feature
+projects: ["today-fish/1"]
+
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: 목표
+      placeholder: "사용자에게 제공할 기능과 가치"
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: 주요 범위
+      placeholder: "이 기능에 포함되는 개발 범위"
+    validations:
+      required: true
+
+  - type: textarea
+    id: done
+    attributes:
+      label: 완료 기준
+      placeholder: "기능 전체가 완료되었다고 판단할 조건"
+    validations:
+      required: true
