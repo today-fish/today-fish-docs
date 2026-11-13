@@ -19,35 +19,14 @@
 
 PR 분류의 기준은 **주된 변경 목적(Type)**과 **변경 영역(Area)**이다. 폴더나 파일 확장자만으로 Type을 정하지 않는다.
 
-### Type — 변경 목적
-
-| Label | 의미 |
-|---|---|
-| `type:decision` | ADR 및 제품·기술 의사결정 |
-| `type:feature` | 기능 또는 요구사항 추가·변경 |
-| `type:docs` | 문서 작성·구조·운영 규칙 변경 |
-| `type:fix` | 오류, 모순, 잘못된 내용 수정 |
-| `type:chore` | 설정, 유지보수, 자동화 작업 |
-
-### Area — 변경 영역
-
-| Label | 의미 |
-|---|---|
-| `area:frontend` | 프론트엔드 아키텍처 및 FE-ADR |
-| `area:backend` | 백엔드 아키텍처 및 BE-ADR |
-| `area:product` | PRD, 기능 명세, 제품 정책 |
-| `area:ux` | UX 문서, 사용자 흐름, 정보 구조 |
-| `area:design-system` | 디자인 시스템, 디자인 토큰 및 컴포넌트 |
-| `area:docs` | README, 템플릿, 공통 문서 구조 및 운영 체계 |
-
-총 11개 라벨을 기준으로 한다. `type:adr`, `area:architecture`, `area:infra` 등 추가 세분화 라벨은 사용하지 않는다.
+실제 등록된 Docs 라벨 11개의 **정확한 이름·색상·설명과 적용 기준**은 [GH-002 저장소별 라벨 정책](../governance/github/GH-002-저장소별-라벨-정책.md)에서 관리한다. `type: Decision`처럼 콜론 뒤 공백과 대소문자를 포함한 실제 이름을 사용한다. Organization Issue Type `Feature`·`Task`·`Bug`와 Docs PR의 `type: *` 라벨은 다른 분류다.
 
 ### 적용 규칙
 
 1. PR에는 주된 변경 목적에 맞는 Type 라벨을 원칙적으로 하나 지정한다.
 2. 주요 변경 영역에 해당하는 Area 라벨을 하나 이상 지정한다. 실질적인 변경이 여러 영역에 걸치면 복수 지정할 수 있다.
 3. README 목차 갱신이나 링크 수정처럼 부수적인 변경에는 별도 Area 라벨을 추가하지 않는다.
-4. ADR은 `type:decision`을 사용하고, FE-ADR은 `area:frontend`, BE-ADR은 `area:backend`를 적용한다.
+4. ADR은 `type: Decision`을 사용하고, FE-ADR은 `area: Frontend`, BE-ADR은 `area: Backend`를 적용한다.
 5. Type은 단순 파일 확장자나 폴더 위치보다 PR의 주된 변경 목적을 기준으로 정한다.
 6. 서로 독립적인 변경은 하나의 PR에 묶기보다 분리하는 것을 우선한다.
 
@@ -55,37 +34,10 @@ PR 분류의 기준은 **주된 변경 목적(Type)**과 **변경 영역(Area)**
 
 | 변경 내용 | Type | Area |
 |---|---|---|
-| FE-ADR 신규 추가 | `type:decision` | `area:frontend` |
-| BE-ADR 신규 추가 | `type:decision` | `area:backend` |
-| 가격지수 산정 정책 결정 | `type:decision` | `area:product` |
-| 백엔드 API 요구사항 추가 | `type:feature` | `area:backend` |
-| 사용자 흐름 개선 | `type:feature` | `area:ux` |
-| 디자인 토큰 변경 | `type:feature` | `area:design-system` |
-| 문서 운영 규칙 개편 | `type:docs` | `area:docs` |
-| 기술 ADR의 잘못된 설명 수정 | `type:fix` | 해당 기술 영역 |
-
-### 기존 라벨 전환
-
-현재 등록된 라벨 6개는 다음과 같이 **삭제하지 않고 이름을 변경**한다.
-
-| 기존 라벨 | 변경 라벨 | 처리 |
-|---|---|---|
-| `Decision` | `type:decision` | 이름 변경 |
-| `Design-System` | `area:design-system` | 이름 변경 |
-| `docs` | `area:docs` | 이름 변경 |
-| `frontend` | `area:frontend` | 이름 변경 |
-| `Product` | `area:product` | 이름 변경 |
-| `UX` | `area:ux` | 이름 변경 |
-
-다음 5개는 신규 생성 대상으로 둔다.
-
-- `type:feature`
-- `type:docs`
-- `type:fix`
-- `type:chore`
-- `area:backend`
-
-이름 변경으로 기존 색상과 Issue·PR 연결 관계를 가능한 한 유지한다. 실제 이름 변경·신규 생성 전 현재 사용 현황과 연결 상태를 확인하고 사용자 승인을 받는다. 기존 라벨은 삭제하지 않는다. 실제 라벨 작업은 별도 실행 단계에서 수행한다.
+| FE-ADR 신규 추가 | `type: Decision` | `area: Frontend` |
+| 백엔드 API 요구사항 추가 | `type: Feature` | `area: Backend` |
+| 문서 운영 규칙 개편 | `type: Docs` | `area: Docs` |
+| 기술 ADR의 잘못된 설명 수정 | `type: Fix` | 해당 기술 영역의 Area |
 
 ## 3. PR 작성 및 검증
 
