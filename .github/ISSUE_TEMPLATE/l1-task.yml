@@ -1,0 +1,33 @@
+name: "L1 Technical Task"
+description: "MVP 독립 기술 목표 등록"
+title: "[L1-XX] "
+type: Task
+projects:
+  - "today-fish/1"
+
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: 목표
+      placeholder: "달성하려는 기술 목표"
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: 주요 범위
+      placeholder: |
+        - 작업 범위 1
+        - 작업 범위 2
+    validations:
+      required: true
+
+  - type: textarea
+    id: done
+    attributes:
+      label: 완료 기준
+      placeholder: "L1 전체 완료를 판단할 조건"
+    validations:
+      required: true
